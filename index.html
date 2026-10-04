@@ -1222,18 +1222,38 @@ function limparEspelhosImpressao(){
 
 function prepararImpressao(){
   limparEspelhosImpressao();
+
+  // Esconde "Copiar indicador" mesmo em ciclos criados antes da atualização
+  document.querySelectorAll('.field, .sub-box .grid > div').forEach(function(el){
+    var lbl = el.querySelector('label');
+    if(lbl && /copiar\s*indicador/i.test(lbl.textContent || '')){
+      el.classList.add('copiar-indicador-field', 'no-print');
+      el.style.setProperty('display', 'none', 'important');
+    }
+    var btn = el.querySelector('button[onclick*="copiarIndicador"]');
+    if(btn){
+      el.classList.add('copiar-indicador-field', 'no-print');
+      el.style.setProperty('display', 'none', 'important');
+    }
+  });
+  document.querySelectorAll('button[onclick*="copiarIndicador"]').forEach(function(b){
+    b.style.setProperty('display', 'none', 'important');
+    if(b.parentElement) b.parentElement.style.setProperty('display', 'none', 'important');
+  });
+
   document.querySelectorAll('textarea').forEach(function(ta){
+    if(ta.id === 'justificativa-campos' || ta.name === 'justificativa_campos'){
+      // mantém justificativa no PDF se preenchida
+    }
     var mirror = document.createElement('div');
     mirror.className = 'textarea-print-mirror';
-    // Preserva quebras de linha e espaços
     mirror.textContent = ta.value || '';
-    // Se estiver vazio, deixa um espaço mínimo
     if(!ta.value || !ta.value.trim()){
       mirror.innerHTML = '&nbsp;';
     }
     ta.parentNode.insertBefore(mirror, ta.nextSibling);
   });
-  setTimeout(function(){ window.print(); }, 100);
+  setTimeout(function(){ window.print(); }, 150);
 }
 
 // Restaura a tela depois de imprimir / cancelar
