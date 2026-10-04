@@ -1100,8 +1100,17 @@ function verificarCamposEVazar(){
   const formElements = document.getElementById('formulario').elements;
 
   // 1. Valida inputs numéricos, de texto, datas, selects e textareas
+  // (ignora justificativa — ela só é pedida se já houver outros campos vazios)
+  const ignorarNomes = {
+    'justificativa_campos': 1,
+    'certificado': 1,
+    'canvas-data': 1,
+    'canvas_data': 1
+  };
   for (let el of formElements) {
-    if (el.name && ['text', 'textarea', 'select-one', 'date', 'time', 'number'].includes(el.type)) {
+    if (!el.name || ignorarNomes[el.name]) continue;
+    if (el.id === 'justificativa-campos' || el.id === 'justificativa-campos-modal') continue;
+    if (['text', 'textarea', 'select-one', 'date', 'time', 'number'].includes(el.type)) {
       if (!el.value || el.value.trim() === '') {
         let labelText = el.name;
         const fieldContainer = el.closest('.field');
@@ -1109,6 +1118,8 @@ function verificarCamposEVazar(){
           const lbl = fieldContainer.querySelector('label');
           if (lbl) labelText = lbl.textContent.trim();
         }
+        // não listar a própria seção de justificativa
+        if (/justificativa/i.test(labelText)) continue;
         camposVaziosGlobais.push({ name: el.name, label: labelText });
       }
     }
