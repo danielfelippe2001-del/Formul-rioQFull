@@ -1741,6 +1741,12 @@ function processarDadosCarregados(jsonText) {
       if (radio) radio.checked = true;
     }
 
+    // Restaura número do certificado (header fora do form)
+    if (data.cert_numero !== undefined) {
+      const certNum = document.getElementById('cert-numero');
+      if (certNum) certNum.value = data.cert_numero;
+    }
+
     setTimeout(() => {
       initCanvas();
     }, 50);
@@ -2484,6 +2490,11 @@ function coletarDadosFormulario(){
       formData[el.name] = el.value;
     }
   }
+  // Certificado fica no header (fora do <form>)
+  var certNum = document.getElementById('cert-numero');
+  if (certNum) formData.cert_numero = certNum.value || '';
+  var certFull = document.getElementById('certificado-completo');
+  if (certFull) formData.certificado = certFull.value || '';
   var customToggles = [];
   document.querySelectorAll('.custom-toggle').forEach(function(t, index) {
     customToggles.push({ index: index, state: t.dataset.state || '0' });
@@ -2583,8 +2594,8 @@ window.addEventListener('DOMContentLoaded', () => {
   atualizarCertificado();
   const numEl = document.getElementById('cert-numero');
   if(numEl){
-    numEl.addEventListener('input', atualizarCertificado);
-    numEl.addEventListener('change', atualizarCertificado);
+    numEl.addEventListener('input', function(){ atualizarCertificado(); if(typeof agendarRascunho==='function') agendarRascunho(); });
+    numEl.addEventListener('change', function(){ atualizarCertificado(); if(typeof agendarRascunho==='function') agendarRascunho(); });
   }
   // Restaura o que estava preenchido (ex.: após atualizar a página)
   restaurarRascunhoLocal();
