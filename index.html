@@ -2293,9 +2293,20 @@ function importarValidadorExcel(e){
       adicionarCiclo();
       var id = ciclo;
       function put(field, val){
-        if(val === 'N/A'){
-          var el = document.getElementById('ciclo_'+id+'_'+field) || document.querySelector('[name="ciclo_'+id+'_'+field+'"]');
-          if(el){ el.value = 'N/A'; return; }
+        var el = document.getElementById('ciclo_'+id+'_'+field) || document.querySelector('[name="ciclo_'+id+'_'+field+'"]');
+        if(val === 'N/A' || val === 'NA'){
+          if(el){
+            // time/date não aceitam texto "N/A" — muda para text (igual botão N/A)
+            if(el.type === 'time' || el.type === 'date' || el.type === 'datetime-local'){
+              if(!el.dataset.originalType) el.dataset.originalType = el.type;
+              el.type = 'text';
+            }
+            el.value = 'N/A';
+          }
+          return;
+        }
+        if(el && el.dataset.originalType && el.type === 'text' && val && val !== 'N/A'){
+          el.type = el.dataset.originalType;
         }
         _vSet('ciclo_'+id+'_'+field, val);
       }
