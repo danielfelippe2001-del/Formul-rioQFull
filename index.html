@@ -542,6 +542,12 @@ button{border:0;border-radius:8px;padding:10px 14px;font-weight:bold;cursor:poin
 .install-banner .btn-close{background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.4)}
 @media print{.install-banner{display:none!important}}
 
+
+.justificativa-print textarea{width:100%;min-height:60px;border:1px solid #ccc;padding:8px;font-size:13px}
+@media print{
+  .justificativa-print{display:block !important;break-inside:avoid}
+  .justificativa-print h2{font-size:14px}
+}
 </style>
 </head>
 <body>
@@ -714,6 +720,13 @@ button{border:0;border-radius:8px;padding:10px 14px;font-weight:bold;cursor:poin
 </div>
 </section>
 
+
+<section id="justificativa-box" class="justificativa-print" style="display:none;">
+  <h2>Justificativa de campos em branco</h2>
+  <div class="field full">
+    <textarea id="justificativa-campos" name="justificativa_campos" rows="3" readonly></textarea>
+  </div>
+</section>
 <section>
 <div class="actions">
 <button type="button" class="primary" onclick="salvar()">Salvar no dispositivo</button>
@@ -733,10 +746,17 @@ button{border:0;border-radius:8px;padding:10px 14px;font-weight:bold;cursor:poin
     <div id="modal-corpo" class="modal-body">
       Existem campos obrigatórios ou em branco no formulário. O que deseja fazer?
     </div>
+    <div id="modal-justificativa-wrap" style="display:none;margin-top:12px;">
+      <label for="justificativa-campos-modal" style="font-size:13px;font-weight:bold;display:block;margin-bottom:6px;">
+        Justificativa obrigatória (por que os campos ficaram em branco):
+      </label>
+      <textarea id="justificativa-campos-modal" rows="3" style="width:100%;padding:10px;border:1px solid #c9d0d6;border-radius:7px;font-size:14px;font-family:inherit;" placeholder="Descreva o motivo..."></textarea>
+      <p id="justificativa-erro" style="display:none;color:#b91c1c;font-size:13px;margin:6px 0 0;">Preencha a justificativa para continuar.</p>
+    </div>
     <div class="modal-actions">
       <button type="button" class="secondary" onclick="fecharModalAlerta()">Voltar / Preencher</button>
       <button type="button" id="btn-ver-campos" class="secondary" onclick="alternarListaCamposVazios()">Ver quais campos não estão preenchidos</button>
-      <button type="button" class="primary" onclick="prosseguirImpressao()">Imprimir mesmo assim</button>
+      <button type="button" class="primary" id="btn-imprimir-mesmo" onclick="prosseguirImpressao()">Imprimir mesmo assim</button>
     </div>
   </div>
 </div>
@@ -1118,15 +1138,37 @@ function verificarCamposEVazar(){
     }
   });
 
+  // 3. Certificado (fora do loop de elements do form)
+  const certNum = document.getElementById('cert-numero');
+  const certMes = document.getElementById('cert-mes');
+  const certAno = document.getElementById('cert-ano');
+  if (!certNum || !String(certNum.value || '').trim()) {
+    camposVaziosGlobais.push({ name: 'cert_numero', label: 'Certificado (número)' });
+  }
+  if (!certMes || certMes.textContent.trim() === '--' || !certAno || certAno.textContent.trim() === '----') {
+    camposVaziosGlobais.push({ name: 'cert_mes_ano', label: 'Certificado (mês/ano — marque um ciclo como Aprovado com data)' });
+  }
+
   const modal = document.getElementById('modal-alerta');
   const corpo = document.getElementById('modal-corpo');
   const btnVerCampos = document.getElementById('btn-ver-campos');
+  const justWrap = document.getElementById('modal-justificativa-wrap');
+  const justTa = document.getElementById('justificativa-campos-modal');
+  const justErr = document.getElementById('justificativa-erro');
 
   if (camposVaziosGlobais.length > 0) {
     corpo.innerHTML = `Existem <strong>${camposVaziosGlobais.length}</strong> campo(s) ou opção(ões) não selecionada(s) no formulário. O que deseja fazer?`;
     btnVerCampos.style.display = 'inline-block';
+    if (justWrap) justWrap.style.display = 'block';
+    if (justTa) justTa.value = '';
+    if (justErr) justErr.style.display = 'none';
     modal.style.display = 'flex';
   } else {
+    // sem campos vazios — limpa justificativa
+    const justForm = document.getElementById('justificativa-campos');
+    const justBox = document.getElementById('justificativa-box');
+    if (justForm) justForm.value = '';
+    if (justBox) justBox.style.display = 'none';
     prepararImpressao();
   }
 }
@@ -1144,6 +1186,8 @@ function alternarListaCamposVazios() {
 
 function fecharModalAlerta() {
   document.getElementById('modal-alerta').style.display = 'none';
+  const justErr = document.getElementById('justificativa-erro');
+  if (justErr) justErr.style.display = 'none';
 }
 
 function limparEspelhosImpressao(){
@@ -1174,6 +1218,23 @@ window.addEventListener('afterprint', limparEspelhosImpressao);
 
 
 function prosseguirImpressao() {
+  const justTa = document.getElementById('justificativa-campos-modal');
+  const justErr = document.getElementById('justificativa-erro');
+  const texto = justTa ? justTa.value.trim() : '';
+  if (!texto) {
+    if (justErr) justErr.style.display = 'block';
+    if (justTa) justTa.focus();
+    return;
+  }
+  if (justErr) justErr.style.display = 'none';
+
+  // Grava no formulário para aparecer no PDF
+  const justForm = document.getElementById('justificativa-campos');
+  const justBox = document.getElementById('justificativa-box');
+  if (justForm) justForm.value = texto;
+  if (justBox) justBox.style.display = 'block';
+
+  if (typeof agendarRascunho === 'function') agendarRascunho();
   fecharModalAlerta();
   prepararImpressao();
 }
