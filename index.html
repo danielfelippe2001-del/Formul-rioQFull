@@ -548,6 +548,18 @@ button{border:0;border-radius:8px;padding:10px 14px;font-weight:bold;cursor:poin
   .justificativa-print{display:block !important;break-inside:avoid}
   .justificativa-print h2{font-size:14px}
 }
+
+@media print {
+  .no-print, .copiar-indicador-field { display: none !important; }
+  /* botões N/A, Salvar, Remover, importar etc. */
+  .save-option, .btn-na-quick, button.remove, .actions button,
+  #btn-importar-validador, button[onclick*="Importar"], button[onclick*="adicionarCiclo"],
+  button[onclick*="copiarIndicador"] { display: none !important; }
+  .sub-box .grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1052,7 +1064,7 @@ function adicionarCiclo(){
   <div class="sub-box">
     <div class="sub-title">Controle Biológico / Químico (Indicadores)</div>
     <div class="grid">
-      <div class="field"><label>Copiar indicador</label>
+      <div class="field no-print copiar-indicador-field"><label>Copiar indicador</label>
         <button type="button" class="save-option" style="width:100%;height:43px;font-size:13px;"
           onclick="copiarIndicadorAnterior(${ciclo})"
           title="Copia marca, lote, Z, D, população e F0 do ciclo anterior que tiver indicador preenchido">
