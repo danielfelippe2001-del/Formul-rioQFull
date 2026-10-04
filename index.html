@@ -1,0 +1,2491 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#17324d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Qualificação">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<meta name="apple-mobile-web-app-title" content="Qualificação">
+<title>Formulário - Qualificação de Desempenho</title>
+<script src="xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#1f2933;-webkit-text-size-adjust:100%}
+header{
+  background:#17324d;color:white;padding:12px 18px;
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  gap:10px;position:relative;min-height:64px;
+}
+header .header-left{flex:1;min-width:120px;z-index:1}
+header .header-center{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  display:flex;align-items:center;justify-content:center;
+  z-index:0;pointer-events:none;
+}
+header .header-center img{pointer-events:auto}
+header .cert-box{flex:0 0 auto;z-index:1;margin-left:auto}
+header .header-logo{
+  max-height:48px;max-width:200px;width:auto;height:auto;
+  object-fit:contain;display:block;
+  background:transparent !important;
+}
+header h1{margin:0;font-size:22px}
+header p{margin:6px 0 0;font-size:13px;opacity:.9}
+header .cert-box{
+  display:flex;align-items:center;gap:4px;flex-wrap:wrap;
+  background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.35);
+  border-radius:8px;padding:8px 12px;font-size:14px;font-weight:bold;
+  white-space:nowrap;
+}
+header .cert-box label{font-size:11px;opacity:.9;font-weight:normal;margin-right:4px}
+header .cert-box .cert-fixed{letter-spacing:0.5px}
+header .cert-box input#cert-numero{
+  width:52px;padding:4px 6px;border:1px solid rgba(255,255,255,0.5);
+  border-radius:5px;background:rgba(255,255,255,0.95);color:#17324d;
+  font-size:15px;font-weight:bold;text-align:center;
+}
+header .cert-box input#cert-numero:focus{outline:2px solid #fff}
+header .cert-box .cert-print-full{display:none}
+main{max-width:1100px;margin:auto;padding:16px}
+section{background:white;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 2px 8px #00000012}
+h2{font-size:18px;margin:0 0 16px;color:#17324d;border-bottom:1px solid #ddd;padding-bottom:9px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.full{grid-column:1/-1}
+label{font-size:13px;font-weight:bold}
+input,textarea,select{width:100%;padding:11px;border:1px solid #c9d0d6;border-radius:7px;font-size:15px;background:#fff}
+.saved-wrap{display:flex;gap:6px;align-items:center}
+.saved-wrap input,.saved-wrap select{flex:1}
+.save-option{padding:7px 10px;background:#e7f0f7;color:#17324d;white-space:nowrap;font-size:12px;border-radius:6px;cursor:pointer}
+.suggestions{position:relative}
+.suggestion-list{position:absolute;z-index:20;left:0;right:0;top:100%;margin-top:4px;background:white;border:1px solid #c9d0d6;border-radius:0 0 7px 7px;max-height:180px;overflow:auto;box-shadow:0 3px 8px #0002}
+.suggestion-list button{display:block;width:100%;text-align:left;background:white;border-radius:0;padding:9px 11px;font-weight:normal;cursor:pointer}
+.suggestion-list button:hover{background:#eef4f8}
+textarea{min-height:80px;resize:vertical}
+.item{border:1px solid #d8dee4;border-radius:9px;padding:12px;margin-bottom:15px;background:#fafbfc}
+.item-title{font-weight:bold;margin-bottom:9px;color:#17324d;font-size:15px;border-bottom:1px dashed #d8dee4;padding-bottom:5px}
+.sub-box{margin-top:10px;padding:12px;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc}
+.sub-title{font-size:13px;font-weight:bold;color:#17324d;margin-bottom:8px}
+button{border:0;border-radius:8px;padding:10px 14px;font-weight:bold;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.add{background:#e7f0f7;color:#17324d}
+.remove{background:#fbe7e7;color:#a52a2a;float:right}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.primary{background:#17324d;color:white}
+.secondary{background:#e9ecef;color:#222}
+.checks{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.check{display:flex;gap:10px;align-items:center;font-weight:normal;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.check input{width:auto}
+
+/* Botão NA rápido */
+.btn-na-quick {
+  padding: 0 10px;
+  background: #eef1f4;
+  color: #555;
+  font-size: 11px;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid #c9d0d6;
+  white-space: nowrap;
+}
+.btn-na-quick:hover {
+  background: #d8dee4;
+}
+
+/* Custom toggle (✓ / NA) */
+.custom-toggle{
+  width:26px;height:26px;
+  border:2px solid #17324d;
+  border-radius:5px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  background:#fff;
+  font-weight:bold;
+  user-select:none;
+  flex-shrink:0;
+  transition:all .15s ease;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.custom-toggle.ok{
+  background:#17324d;
+  color:#fff;
+  font-size:16px;
+}
+.custom-toggle.na{
+  background:#eef1f4;
+  color:#555;
+  font-size:10px;
+  letter-spacing:-0.3px;
+}
+.custom-toggle .toggle-content{
+  line-height:1;
+  pointer-events:none;
+}
+
+.grupo-checks{grid-template-columns:repeat(3,1fr);margin-top:8px}
+.grupo-item{
+  border:1px solid #d8dee4;
+  border-radius:9px;
+  padding:12px;
+  background:#fafbfc;
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+  cursor:pointer;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.grupo-item strong{
+  flex:1;
+  color:#17324d;
+  min-width:120px;
+  pointer-events:none;
+}
+.grupo-item .check{font-size:13px}
+
+/* Drawing area */
+.draw-area{
+  border:1px solid #c9d0d6;
+  border-radius:9px;
+  overflow:hidden;
+  background:#fff;
+  margin-top:6px;
+}
+.draw-toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+  padding:10px 12px;
+  background:#f4f6f8;
+  border-bottom:1px solid #d8dee4;
+}
+.draw-toolbar label{font-weight:normal;font-size:12px;display:flex;align-items:center;gap:4px}
+.draw-toolbar input[type="color"]{width:36px;height:28px;padding:0;border:1px solid #ccc;border-radius:4px;cursor:pointer}
+.draw-toolbar input[type="range"]{width:80px}
+.draw-toolbar button{padding:7px 11px;font-size:13px}
+.draw-toolbar .active{background:#17324d;color:#fff}
+#canvas-disposicao{
+  display:block;
+  width:100%;
+  max-width:100%;
+  height:auto;
+  touch-action:none;
+  cursor:crosshair;
+  background:#fff;
+}
+.draw-help{font-size:12px;color:#666;margin:6px 0 0}
+
+.status{display:flex;gap:10px;flex-wrap:wrap}
+.status label{padding:10px 14px;border:1px solid #ccc;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+
+/* Modal de Alerta de Campos Vazios */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 100%;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-height: 90vh;
+}
+.modal-content h3 {
+  margin: 0;
+  color: #17324d;
+  font-size: 18px;
+}
+.modal-body {
+  font-size: 14px;
+  color: #333;
+  overflow-y: auto;
+  max-height: 250px;
+  background: #f8fafc;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+.modal-body ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.modal-body li {
+  margin-bottom: 4px;
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+@media(max-width:750px){
+  .grupo-checks{grid-template-columns:1fr}
+  main{padding:10px}
+  section{padding:14px}
+  .grid{grid-template-columns:1fr}
+  .checks{grid-template-columns:1fr}
+  header{padding:10px 12px;min-height:56px}
+  header h1{font-size:15px}
+  header p{font-size:10px}
+  header .header-logo{max-height:28px;max-width:100px}
+  header .header-left{max-width:38%;z-index:2}
+  header .cert-box{max-width:50%;z-index:2;font-size:11px;padding:5px 8px}
+  header .cert-box input#cert-numero{width:40px;font-size:12px}
+  /* Puxa o logo para a esquerda no celular, longe do certificado */
+  header .header-center{
+    left: 38% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+  header .cert-box{font-size:12px;padding:5px 8px}
+  header .cert-box input#cert-numero{width:44px;font-size:13px}
+  input,textarea,select{font-size:16px}
+}
+@media(min-width:751px){
+  .two{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ========== PRINT / A4 ========== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+  html, body {
+    background: white !important;
+    font-size: 9.5pt;
+    line-height: 1.25;
+    width: 100% !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  header {
+    background: #17324d !important;
+    color: white !important;
+    padding: 8px 12px !important;
+    min-height: 64px !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    display: grid !important;
+    grid-template-columns: 1fr auto 1fr !important;
+    align-items: center !important;
+    position: relative !important;
+  }
+  header .header-center{
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    justify-self: center !important;
+    z-index: 1 !important;
+  }
+  header .header-left{justify-self: start !important; z-index:1}
+  header .cert-box{justify-self: end !important; z-index:1; margin-left: 0 !important}
+  header h1{font-size:12pt; margin:0}
+  header p{font-size:7.5pt; margin:2px 0 0}
+  header .header-logo{
+    max-height:56px !important;
+    max-width:260px !important;
+    width: auto !important;
+    height: auto !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  header {
+    min-height: 64px !important;
+    padding: 8px 12px !important;
+  }
+  header .cert-box{
+    background: #fff !important;
+    border: 1px solid #17324d !important;
+    color: #17324d !important;
+    padding: 4px 10px !important;
+    font-size: 11pt !important;
+    font-weight: bold !important;
+    border-radius: 4px !important;
+    letter-spacing: 0.3px !important;
+    gap: 0 !important;
+  }
+  header .cert-box label{
+    display: none !important;
+  }
+  /* Esconde as partes separadas e mostra só o texto unificado */
+  header .cert-box .cert-fixed,
+  header .cert-box input#cert-numero{
+    display: none !important;
+  }
+  header .cert-box .cert-print-full{
+    display: inline !important;
+    color: #17324d !important;
+    font-size: 11pt !important;
+    font-weight: bold !important;
+    letter-spacing: 0.5px !important;
+  }
+  main{
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  form {
+    width: 100% !important;
+  }
+  section{
+    box-shadow: none !important;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    page-break-before: auto !important;
+    page-break-after: auto !important;
+    margin: 0 0 5px 0 !important;
+    padding: 6px 8px !important;
+  }
+  h2{
+    font-size: 10.5pt;
+    margin: 0 0 4px 0 !important;
+    padding-bottom: 2px;
+    border-bottom: 1px solid #ddd;
+  }
+  .actions,
+  button.add,
+  button.remove,
+  .save-option,
+  .suggestion-list,
+  .draw-toolbar,
+  .draw-help,
+  .btn-na-quick,
+  .saved-wrap button,
+  .modal-overlay {
+    display: none !important;
+  }
+  .custom-toggle{
+    border-color: #000 !important;
+    width: 15px;
+    height: 15px;
+  }
+  .custom-toggle.ok{
+    background: #17324d !important;
+    color: white !important;
+  }
+  .custom-toggle.na{
+    background: #eee !important;
+    color: #333 !important;
+    font-size: 7px;
+  }
+  input, textarea, select{
+    border: 1px solid #999 !important;
+    padding: 3px 5px !important;
+    font-size: 9pt !important;
+    min-height: 0 !important;
+    line-height: 1.2 !important;
+  }
+  
+  .field > div[style*="display:flex"] {
+    display: flex !important;
+    border: 1px solid #999 !important;
+    border-radius: 3px !important;
+    overflow: hidden !important;
+  }
+  .field > div[style*="display:flex"] input {
+    border: none !important;
+    border-radius: 0 !important;
+  }
+  .field > div[style*="display:flex"] input:first-child {
+    border-right: 1px solid #999 !important;
+  }
+  .field > div[style*="display:flex"] .suggestions {
+    border: none !important;
+  }
+
+  input[type="date"],
+  input[type="time"],
+  select {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    background: transparent !important;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator,
+  input[type="date"]::-webkit-inner-spin-button,
+  input[type="time"]::-webkit-inner-spin-button,
+  input[type="date"]::-webkit-clear-button,
+  input[type="time"]::-webkit-clear-button {
+    display: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  select::-ms-expand {
+    display: none !important;
+  }
+  /* No PDF, esconde o textarea e mostra o espelho com texto completo */
+  textarea {
+    display: none !important;
+  }
+  .textarea-print-mirror {
+    display: block !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    overflow: visible !important;
+    border: 1px solid #999 !important;
+    border-radius: 3px !important;
+    padding: 4px 6px !important;
+    font-size: 9pt !important;
+    line-height: 1.35 !important;
+    background: #fff !important;
+    min-height: 24px !important;
+    height: auto !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  label {
+    font-size: 8pt;
+    margin-bottom: 1px !important;
+    font-weight: bold;
+  }
+  .field {
+    gap: 2px !important;
+  }
+  .grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 4px 7px !important;
+  }
+  .grid.two {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .field.full {
+    grid-column: 1 / -1 !important;
+  }
+  .checks {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 3px 8px !important;
+  }
+  .grupo-checks {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  .grupo-item {
+    padding: 4px 6px !important;
+    gap: 4px;
+  }
+  .item {
+    padding: 5px 6px !important;
+    margin-bottom: 3px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .item-title {
+    font-size: 9pt;
+    margin-bottom: 2px;
+  }
+  #canvas-disposicao {
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+    max-height: 340px !important;
+    object-fit: contain !important;
+    border: 1px solid #999;
+    display: block;
+    margin: 0 auto;
+  }
+  .draw-area {
+    border: 1px solid #999;
+    margin-top: 4px;
+    text-align: center;
+    width: 100% !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  * {
+    overflow: visible !important;
+  }
+}
+
+/* Banner Instalar App */
+.install-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:#17324d;color:white;padding:14px 16px;z-index:9999;box-shadow:0 -4px 20px rgba(0,0,0,0.25);font-size:14px}
+.install-banner.show{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.install-banner p{margin:0;flex:1;min-width:200px;line-height:1.4}
+.install-banner .install-actions{display:flex;gap:8px;flex-shrink:0}
+.install-banner button{border:0;border-radius:8px;padding:10px 14px;font-weight:bold;cursor:pointer;font-size:13px}
+.install-banner .btn-install{background:#fff;color:#17324d}
+.install-banner .btn-close{background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.4)}
+@media print{.install-banner{display:none!important}}
+
+</style>
+</head>
+<body>
+
+<header>
+<div class="header-left">
+  <h1>Formulário – Qualificação</h1>
+  <p>Quality Full Pretaçastação de Serviços LTDA</p>
+</div>
+<div class="header-center">
+  <img class="header-logo" src="logo.png" alt="Logo" onerror="this.style.display='none'">
+</div>
+<div class="cert-box" title="Mês e ano vêm da Data de início. Só o número é editável.">
+  <label>Certificado</label>
+  <span class="cert-fixed">QD-</span>
+  <span class="cert-fixed" id="cert-mes">--</span>
+  <input type="text" id="cert-numero" name="cert_numero" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="nº" autocomplete="off">
+  <span class="cert-fixed">/</span>
+  <span class="cert-fixed" id="cert-ano">----</span>
+  <span class="cert-print-full" id="cert-print-full">QD-----/----</span>
+  <input type="hidden" id="certificado-completo" name="certificado" value="">
+</div>
+</header>
+
+<main>
+<form id="formulario">
+
+<section>
+<h2>1. Identificação</h2>
+<div class="grid">
+<div class="field suggestions"><label>Cliente</label><div class="saved-wrap"><input id="cliente" name="cliente" autocomplete="off" oninput="mostrarSugestoes('cliente')" onfocus="mostrarSugestoes('cliente')"><button type="button" class="save-option" onclick="salvarOpcao('cliente')">Salvar</button></div><div id="cliente-list" class="suggestion-list"></div></div>
+<div class="field suggestions"><label>Setor</label><div class="saved-wrap"><input id="setor" name="setor" autocomplete="off" oninput="mostrarSugestoes('setor')" onfocus="mostrarSugestoes('setor')"><button type="button" class="save-option" onclick="salvarOpcao('setor')">Salvar</button></div><div id="setor-list" class="suggestion-list"></div></div>
+<div class="field suggestions"><label>Equipamento</label><div class="saved-wrap"><input id="equipamento" name="equipamento" autocomplete="off" oninput="mostrarSugestoes('equipamento')" onfocus="mostrarSugestoes('equipamento')"><button type="button" class="save-option" onclick="salvarOpcao('equipamento')">Salvar</button></div><div id="equipamento-list" class="suggestion-list"></div></div>
+<div class="field suggestions"><label>Fabricante</label><div class="saved-wrap"><input id="fabricante" name="fabricante" autocomplete="off" oninput="mostrarSugestoes('fabricante')" onfocus="mostrarSugestoes('fabricante')"><button type="button" class="save-option" onclick="salvarOpcao('fabricante')">Salvar</button></div><div id="fabricante-list" class="suggestion-list"></div></div>
+<div class="field"><label>Modelo</label><input name="modelo"></div>
+<div class="field"><label>Nº de série</label><input name="serie"></div>
+<div class="field suggestions"><label>Identificação / TAG</label><div class="saved-wrap"><input id="tag" name="tag" autocomplete="off" oninput="mostrarSugestoes('tag')" onfocus="mostrarSugestoes('tag')"><button type="button" class="save-option" onclick="salvarOpcao('tag')">Salvar</button></div><div id="tag-list" class="suggestion-list"></div></div>
+<div class="field suggestions"><label>Validador</label><div class="saved-wrap"><input id="validador" name="validador" autocomplete="off" oninput="mostrarSugestoes('validador')" onfocus="mostrarSugestoes('validador')"><button type="button" class="save-option" onclick="salvarOpcao('validador')">Salvar</button></div><div id="validador-list" class="suggestion-list"></div></div>
+<div class="field suggestions"><label>Protocolo</label><div class="saved-wrap"><input id="protocolo" name="protocolo" autocomplete="off" oninput="mostrarSugestoes('protocolo')" onfocus="mostrarSugestoes('protocolo')"><button type="button" class="save-option" onclick="salvarOpcao('protocolo')">Salvar</button></div><div id="protocolo-list" class="suggestion-list"></div></div>
+<div class="field"><label>Data de início</label><input type="date" name="inicio" id="data-inicio" onchange="atualizarCertificado()" oninput="atualizarCertificado()"></div>
+<div class="field"><label>Data de término</label><input type="date" name="fim"></div>
+<div class="field suggestions"><label>Calibração / verificação</label><div class="saved-wrap"><input id="calibracao" name="calibracao" autocomplete="off" oninput="mostrarSugestoes('calibracao')" onfocus="mostrarSugestoes('calibracao')"><button type="button" class="save-option" onclick="salvarOpcao('calibracao')">Salvar</button></div><div id="calibracao-list" class="suggestion-list"></div></div>
+</div>
+</section>
+
+<section>
+<h2>2. Setup</h2>
+<div class="grid">
+<div class="field full">
+<label>Grupos utilizados</label>
+<div class="checks grupo-checks">
+  <div class="grupo-item" onclick="triggerToggle(this)" style="cursor:pointer">
+    <strong>Temperatura (°C)</strong>
+    <div class="custom-toggle" data-state="0" title="Clique: OK → NA → limpar">
+      <span class="toggle-content"></span>
+    </div>
+  </div>
+  <div class="grupo-item" onclick="triggerToggle(this)" style="cursor:pointer">
+    <strong>Umidade (%)</strong>
+    <div class="custom-toggle" data-state="0" title="Clique: OK → NA → limpar">
+      <span class="toggle-content"></span>
+    </div>
+  </div>
+  <div class="grupo-item" onclick="triggerToggle(this)" style="cursor:pointer">
+    <strong>Pressão</strong>
+    <div class="custom-toggle" data-state="0" title="Clique: OK → NA → limpar">
+      <span class="toggle-content"></span>
+    </div>
+  </div>
+</div>
+</div>
+<div class="field suggestions"><label>Setpoint de temperatura</label><div class="saved-wrap"><input id="temp" name="temp" autocomplete="off" oninput="mostrarSugestoes('temp')" onfocus="mostrarSugestoes('temp')"><button type="button" class="save-option" onclick="salvarOpcao('temp')">Salvar</button></div><div id="temp-list" class="suggestion-list"></div></div>
+<div class="field suggestions"><label>Setpoint de umidade</label><div class="saved-wrap"><input id="umidade" name="umidade" autocomplete="off" oninput="mostrarSugestoes('umidade')" onfocus="mostrarSugestoes('umidade')"><button type="button" class="save-option" onclick="salvarOpcao('umidade')">Salvar</button></div><div id="umidade-list" class="suggestion-list"></div></div>
+<div class="field suggestions"><label>Intervalo de registro</label><div class="saved-wrap"><input id="intervalo" name="intervalo" autocomplete="off" oninput="mostrarSugestoes('intervalo')" onfocus="mostrarSugestoes('intervalo')"><button type="button" class="save-option" onclick="salvarOpcao('intervalo')">Salvar</button></div><div id="intervalo-list" class="suggestion-list"></div></div>
+</div>
+</section>
+
+<section>
+<h2>3. Evidências da qualificação</h2>
+<div class="checks">
+<label class="check" onclick="triggerToggle(this)">
+  <div class="custom-toggle" data-state="0"><span class="toggle-content"></span></div>
+  Fotos do equipamento
+</label>
+<label class="check" onclick="triggerToggle(this)">
+  <div class="custom-toggle" data-state="0"><span class="toggle-content"></span></div>
+  Fotos do controlador
+</label>
+<label class="check" onclick="triggerToggle(this)">
+  <div class="custom-toggle" data-state="0"><span class="toggle-content"></span></div>
+  Placa do equipamento
+</label>
+<label class="check" onclick="triggerToggle(this)">
+  <div class="custom-toggle" data-state="0"><span class="toggle-content"></span></div>
+  Fotos do Validador
+</label>
+<label class="check" onclick="triggerToggle(this)">
+  <div class="custom-toggle" data-state="0"><span class="toggle-content"></span></div>
+  Etiqueta de qualificação
+</label>
+<label class="check" onclick="triggerToggle(this)">
+  <div class="custom-toggle" data-state="0"><span class="toggle-content"></span></div>
+  Data / hora
+</label>
+<label class="check" onclick="triggerToggle(this)">
+  <div class="custom-toggle" id="toggle-bioindicadores" data-state="0"><span class="toggle-content"></span></div>
+  Bioindicadores
+</label>
+<label class="check" onclick="triggerToggle(this)">
+  <div class="custom-toggle" id="toggle-indicadores-quimicos" data-state="0"><span class="toggle-content"></span></div>
+  Indicadores químicos
+</label>
+</div>
+</section>
+
+<section>
+<h2>4. Critérios</h2>
+<div class="grid two">
+  <div class="field">
+    <label>Critérios / observações</label>
+    <textarea name="criterios"></textarea>
+  </div>
+  <div class="field">
+    <label>Disposição dos sensores (texto)</label>
+    <textarea name="disposicao" id="disposicao-texto"></textarea>
+  </div>
+</div>
+
+<div class="field full" style="margin-top:18px">
+  <label>Desenho da disposição dos sensores</label>
+  <div class="draw-area">
+    <div class="draw-toolbar">
+      <label>Cor <input type="color" id="draw-color" value="#17324d"></label>
+      <label>Espessura <input type="range" id="draw-size" min="1" max="20" value="3"></label>
+      <button type="button" id="btn-pen" class="secondary active" onclick="setDrawMode('pen')">Caneta</button>
+      <button type="button" id="btn-eraser" class="secondary" onclick="setDrawMode('eraser')">Borracha</button>
+      <button type="button" class="secondary" onclick="limparCanvas()">Limpar</button>
+      <button type="button" class="secondary" onclick="document.getElementById('import-img').click()">Importar imagem</button>
+      <input type="file" id="import-img" accept="image/*" style="display:none" onchange="importarImagem(event)">
+      <button type="button" class="secondary" onclick="window.open('https://excalidraw.com','_blank')">Abrir Desenho Online</button>
+    </div>
+    <canvas id="canvas-disposicao" width="900" height="480"></canvas>
+  </div>
+  <p class="draw-help">Dica: desenhe aqui com o mouse/dedo, ou use <b>Abrir Desenho Online</b> → exporte como PNG → <b>Importar imagem</b>. O desenho e os dados do formulário ficam salvos automaticamente neste aparelho (não se perdem ao atualizar a página).</p>
+  <input type="hidden" id="canvas-data" name="canvas_disposicao" value="">
+</div>
+</section>
+
+<section>
+<h2>5. Ciclos realizados</h2>
+<div id="ciclos"></div>
+<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:8px">
+  <button type="button" class="add" onclick="adicionarCiclo()">+ Adicionar ciclo</button>
+  <button type="button" class="secondary" onclick="document.getElementById('import-validador').click()">Importar do Validador (Excel)</button>
+  <input type="file" id="import-validador" accept=".xlsx,.xls" style="display:none" onchange="importarValidadorExcel(event)">
+</div>
+<p class="draw-help" style="margin-top:0">Importa horários e mín/máx do relatório Excel do Validador 2000 (3.62B). Funciona para 24h, abertura de porta, queda de energia, esterilização e túnel.</p>
+</section>
+
+<section>
+<h2>6. Resultado / conclusão</h2>
+<div class="field">
+<label>Observações</label>
+<textarea name="observacoes"></textarea>
+</div>
+<br>
+<div class="status">
+<label><input type="radio" name="status" value="aprovado"> Aprovado</label>
+<label><input type="radio" name="status" value="reprovado"> Reprovado</label>
+</div>
+</section>
+
+<section>
+<div class="actions">
+<button type="button" class="primary" onclick="salvar()">Salvar no dispositivo</button>
+<button type="button" class="secondary" onclick="carregar()">Carregar salvo</button>
+<button type="button" class="secondary" onclick="limparFormularioCompleto()">Limpar formulário</button>
+<button type="button" class="secondary" onclick="verificarCamposEVazar()">Imprimir / Salvar PDF</button>
+</div>
+</section>
+
+</form>
+</main>
+
+<!-- Modal de Alerta de Campos Vazios -->
+<div id="modal-alerta" class="modal-overlay">
+  <div class="modal-content">
+    <h3 id="modal-titulo">Aviso: Campos Vazios Encontrados</h3>
+    <div id="modal-corpo" class="modal-body">
+      Existem campos obrigatórios ou em branco no formulário. O que deseja fazer?
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="secondary" onclick="fecharModalAlerta()">Voltar / Preencher</button>
+      <button type="button" id="btn-ver-campos" class="secondary" onclick="alternarListaCamposVazios()">Ver quais campos não estão preenchidos</button>
+      <button type="button" class="primary" onclick="prosseguirImpressao()">Imprimir mesmo assim</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let ciclo = 0;
+let drawing = false;
+let drawMode = 'pen';
+let lastX = 0, lastY = 0;
+let canvas, ctx;
+let camposVaziosGlobais = [];
+
+function cycleToggle(el){
+  if(!el) return;
+  let state = parseInt(el.dataset.state || '0');
+  state = (state + 1) % 3;
+  el.dataset.state = state;
+  const content = el.querySelector('.toggle-content');
+  el.classList.remove('ok','na');
+  if(state === 0){
+    content.textContent = '';
+  } else if(state === 1){
+    content.textContent = '✓';
+    el.classList.add('ok');
+  } else {
+    content.textContent = 'NA';
+    el.classList.add('na');
+  }
+}
+
+function triggerToggle(containerOrEl) {
+  if (!containerOrEl) return;
+  let toggle = containerOrEl.classList.contains('custom-toggle') 
+    ? containerOrEl 
+    : containerOrEl.querySelector('.custom-toggle');
+  cycleToggle(toggle);
+}
+
+function preencherNA(inputId){
+  const input = document.getElementById(inputId);
+  if(!input) return;
+  
+  if(input.value === 'N/A'){
+    input.type = input.dataset.originalType || 'text';
+    input.value = '';
+  } else {
+    input.dataset.originalType = input.type;
+    input.type = 'text';
+    input.value = 'N/A';
+  }
+}
+
+function preencherNAGet(inputIdValor, inputIdSensor){
+  const inputVal = document.getElementById(inputIdValor);
+  const inputSens = document.getElementById(inputIdSensor);
+  if(!inputVal || !inputSens) return;
+  
+  if(inputVal.value === 'N/A' && inputSens.value === 'N/A'){
+    inputVal.value = '';
+    inputSens.value = '';
+  } else {
+    inputVal.value = 'N/A';
+    inputSens.value = 'N/A';
+  }
+}
+
+function normalizarSuperscript(str){
+  if(!str) return '';
+  const map = {'⁰':'0', '¹':'1', '²':'2', '³':'3', '⁴':'4', '⁵':'5', '⁶':'6', '⁷':'7', '⁸':'8', '⁹':'9', '⁻':'-'};
+  return str.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻]/g, m => map[m]);
+}
+
+function parseCientifica(str){
+  if(!str) return NaN;
+  str = normalizarSuperscript(str.trim().toUpperCase().replace(',', '.'));
+  
+  if(str.startsWith('10^') || str.startsWith('10-')){
+    let expStr = str.replace('10^', '').replace('10-', '-');
+    let exp = parseFloat(expStr);
+    if(!isNaN(exp)) return Math.pow(10, exp);
+  }
+
+  if(str.includes('X10') || str.includes('X 10')){
+    let parts = str.split(/X\s*10[\^\s]*/);
+    if(parts.length >= 2){
+      let base = parts[0].trim() === '' ? 1 : parseFloat(parts[0]);
+      let exp = parseFloat(parts[1]);
+      if(!isNaN(base) && !isNaN(exp)){
+        return base * Math.pow(10, exp);
+      }
+    }
+  }
+
+  let num = parseFloat(str);
+  return num;
+}
+
+function calcularF0Ciclo(idCiclo){
+  const popIniInput = document.getElementById(`ciclo_${idCiclo}_pop_inicial`);
+  const popFimInput = document.getElementById(`ciclo_${idCiclo}_pop_final`);
+  const dInput = document.getElementById(`ciclo_${idCiclo}_valor_d`);
+  const f0Input = document.getElementById(`ciclo_${idCiclo}_valor_f0`);
+  if(!popIniInput || !dInput || !f0Input) return;
+  
+  let rawPopIni = normalizarSuperscript((popIniInput.value || '').trim());
+
+  if(popFimInput){
+    let matchExp = rawPopIni.match(/10\s*[\^]?\s*([0-9]+)/i) || rawPopIni.match(/1E([0-9]+)/i) || rawPopIni.match(/X\s*10\s*([0-9]+)/i);
+    if(matchExp){
+      let exp = matchExp[1];
+      popFimInput.value = `10^-${exp}`;
+    }
+  }
+
+  let popIni = parseCientifica(rawPopIni);
+  let rawPopFim = popFimInput ? (popFimInput.value || '').trim() : '10^-6';
+  let popFim = parseCientifica(rawPopFim);
+  if(isNaN(popFim)) popFim = 1e-6;
+
+  let d = parseFloat((dInput.value || '').replace(',', '.'));
+  
+  if(!isNaN(popIni) && popIni > 0 && !isNaN(d) && d > 0){
+    let logIni = Math.log10(popIni);
+    let logFim = Math.log10(popFim);
+    let f0 = d * (logIni - logFim);
+    f0Input.value = f0.toFixed(2);
+  }
+}
+
+function adicionarCiclo(){
+  ciclo++;
+  const bioState = parseInt(document.getElementById('toggle-bioindicadores')?.dataset.state || '0');
+  const quimState = parseInt(document.getElementById('toggle-indicadores-quimicos')?.dataset.state || '0');
+  
+  const mostrarBioQuim = (bioState === 1) || (quimState === 1);
+
+  const area = document.getElementById('ciclos');
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.innerHTML = `<button type="button" class="remove" onclick="this.parentElement.remove()">Remover</button>
+  <div class="item-title">Ciclo ${ciclo}</div>
+  <div class="grid">
+    <div class="field"><label>Estudo</label>
+      <div class="suggestions">
+        <div class="saved-wrap">
+          <input id="ciclo_${ciclo}_estudo" name="ciclo_${ciclo}_estudo" autocomplete="off" oninput="mostrarSugestoes('ciclo_${ciclo}_estudo', 'estudo')" onfocus="mostrarSugestoes('ciclo_${ciclo}_estudo', 'estudo')">
+          <button type="button" class="save-option" onclick="salvarOpcao('estudo', 'ciclo_${ciclo}_estudo')">Salvar</button>
+        </div>
+        <div id="ciclo_${ciclo}_estudo-list" class="suggestion-list"></div>
+      </div>
+    </div>
+    
+    <div class="field"><label>Setpoint Temp. (°C)</label>
+      <div class="suggestions">
+        <div class="saved-wrap">
+          <input id="ciclo_${ciclo}_setpoint_temp" name="ciclo_${ciclo}_setpoint_temp" inputmode="text" autocomplete="off" oninput="mostrarSugestoes('ciclo_${ciclo}_setpoint_temp', 'setpoint')" onfocus="mostrarSugestoes('ciclo_${ciclo}_setpoint_temp', 'setpoint')">
+          <button type="button" class="save-option" onclick="salvarOpcao('setpoint', 'ciclo_${ciclo}_setpoint_temp')">Salvar</button>
+        </div>
+        <div id="ciclo_${ciclo}_setpoint_temp-list" class="suggestion-list"></div>
+      </div>
+    </div>
+
+    <div class="field"><label>Setpoint Umidade (% UR)</label>
+      <div class="suggestions">
+        <div class="saved-wrap">
+          <input id="ciclo_${ciclo}_setpoint_umidade" name="ciclo_${ciclo}_setpoint_umidade" inputmode="decimal" autocomplete="off" oninput="mostrarSugestoes('ciclo_${ciclo}_setpoint_umidade', 'setpoint_umidade')" onfocus="mostrarSugestoes('ciclo_${ciclo}_setpoint_umidade', 'setpoint_umidade')">
+          <button type="button" class="save-option" onclick="salvarOpcao('setpoint_umidade', 'ciclo_${ciclo}_setpoint_umidade')">Salvar</button>
+        </div>
+        <div id="ciclo_${ciclo}_setpoint_umidade-list" class="suggestion-list"></div>
+      </div>
+    </div>
+
+    <div class="field"><label>Data</label><input type="date" name="ciclo_${ciclo}_data"></div>
+    <div class="field"><label>Início</label><input type="time" step="1" name="ciclo_${ciclo}_inicio"></div>
+    
+    <div class="field"><label>Início da exposição</label>
+      <div style="display:flex; gap:5px;">
+        <input type="time" step="1" id="ciclo_${ciclo}_inicio_exp" name="ciclo_${ciclo}_inicio_exp" style="flex:1;">
+        <button type="button" class="btn-na-quick" onclick="preencherNA('ciclo_${ciclo}_inicio_exp')">N/A</button>
+      </div>
+    </div>
+
+    <div class="field"><label>Final da exposição</label>
+      <div style="display:flex; gap:5px;">
+        <input type="time" step="1" id="ciclo_${ciclo}_final_exp" name="ciclo_${ciclo}_final_exp" style="flex:1;">
+        <button type="button" class="btn-na-quick" onclick="preencherNA('ciclo_${ciclo}_final_exp')">N/A</button>
+      </div>
+    </div>
+
+    <div class="field"><label>Ciclo normal</label>
+      <div style="display:flex; gap:5px;">
+        <input type="time" step="1" id="ciclo_${ciclo}_Ciclo_normal" name="ciclo_${ciclo}_Ciclo_normal" style="flex:1;">
+        <button type="button" class="btn-na-quick" onclick="preencherNA('ciclo_${ciclo}_Ciclo_normal')">N/A</button>
+      </div>
+    </div>
+
+    <div class="field"><label>Final</label><input type="time" step="1" name="ciclo_${ciclo}_final"></div>
+    
+    <div class="field"><label>Mín. °C / Sensor</label>
+      <div style="display:flex; gap:5px;">
+        <input type="text" id="ciclo_${ciclo}_min_c" name="ciclo_${ciclo}_min_c" inputmode="text" style="flex:1;" placeholder="Valor">
+        <div class="suggestions" style="flex:1;">
+          <input id="ciclo_${ciclo}_min_c_sensor" name="ciclo_${ciclo}_min_c_sensor" autocomplete="off" placeholder="Sensor" oninput="mostrarSugestoes('ciclo_${ciclo}_min_c_sensor', 'sensor_temp')" onfocus="mostrarSugestoes('ciclo_${ciclo}_min_c_sensor', 'sensor_temp')">
+          <div id="ciclo_${ciclo}_min_c_sensor-list" class="suggestion-list"></div>
+        </div>
+        <button type="button" class="btn-na-quick" onclick="preencherNAGet('ciclo_${ciclo}_min_c', 'ciclo_${ciclo}_min_c_sensor')">N/A</button>
+      </div>
+    </div>
+
+    <div class="field"><label>Máx. °C / Sensor</label>
+      <div style="display:flex; gap:5px;">
+        <input type="text" id="ciclo_${ciclo}_max_c" name="ciclo_${ciclo}_max_c" inputmode="text" style="flex:1;" placeholder="Valor">
+        <div class="suggestions" style="flex:1;">
+          <input id="ciclo_${ciclo}_max_c_sensor" name="ciclo_${ciclo}_max_c_sensor" autocomplete="off" placeholder="Sensor" oninput="mostrarSugestoes('ciclo_${ciclo}_max_c_sensor', 'sensor_temp')" onfocus="mostrarSugestoes('ciclo_${ciclo}_max_c_sensor', 'sensor_temp')">
+          <div id="ciclo_${ciclo}_max_c_sensor-list" class="suggestion-list"></div>
+        </div>
+        <button type="button" class="btn-na-quick" onclick="preencherNAGet('ciclo_${ciclo}_max_c', 'ciclo_${ciclo}_max_c_sensor')">N/A</button>
+      </div>
+    </div>
+
+    <div class="field"><label>Mín. UR / Sensor</label>
+      <div style="display:flex; gap:5px;">
+        <input type="text" id="ciclo_${ciclo}_min_ur" name="ciclo_${ciclo}_min_ur" inputmode="decimal" style="flex:1;" placeholder="Valor">
+        <div class="suggestions" style="flex:1;">
+          <input id="ciclo_${ciclo}_min_ur_sensor" name="ciclo_${ciclo}_min_ur_sensor" autocomplete="off" placeholder="Sensor" oninput="mostrarSugestoes('ciclo_${ciclo}_min_ur_sensor', 'sensor_ur')" onfocus="mostrarSugestoes('ciclo_${ciclo}_min_ur_sensor', 'sensor_ur')">
+          <div id="ciclo_${ciclo}_min_ur_sensor-list" class="suggestion-list"></div>
+        </div>
+        <button type="button" class="btn-na-quick" onclick="preencherNAGet('ciclo_${ciclo}_min_ur', 'ciclo_${ciclo}_min_ur_sensor')">N/A</button>
+      </div>
+    </div>
+
+    <div class="field"><label>Máx. UR / Sensor</label>
+      <div style="display:flex; gap:5px;">
+        <input type="text" id="ciclo_${ciclo}_max_ur" name="ciclo_${ciclo}_max_ur" inputmode="decimal" style="flex:1;" placeholder="Valor">
+        <div class="suggestions" style="flex:1;">
+          <input id="ciclo_${ciclo}_max_ur_sensor" name="ciclo_${ciclo}_max_ur_sensor" autocomplete="off" placeholder="Sensor" oninput="mostrarSugestoes('ciclo_${ciclo}_max_ur_sensor', 'sensor_ur')" onfocus="mostrarSugestoes('ciclo_${ciclo}_max_ur_sensor', 'sensor_ur')">
+          <div id="ciclo_${ciclo}_max_ur_sensor-list" class="suggestion-list"></div>
+        </div>
+        <button type="button" class="btn-na-quick" onclick="preencherNAGet('ciclo_${ciclo}_max_ur', 'ciclo_${ciclo}_max_ur_sensor')">N/A</button>
+      </div>
+    </div>
+
+    <div class="field"><label>F0 mín. / Sensor</label>
+      <div style="display:flex; gap:5px;">
+        <input type="text" id="ciclo_${ciclo}_f0" name="ciclo_${ciclo}_f0" inputmode="decimal" style="flex:1;" placeholder="Valor">
+        <div class="suggestions" style="flex:1;">
+          <input id="ciclo_${ciclo}_f0_sensor" name="ciclo_${ciclo}_f0_sensor" autocomplete="off" placeholder="Sensor" oninput="mostrarSugestoes('ciclo_${ciclo}_f0_sensor', 'sensor_temp')" onfocus="mostrarSugestoes('ciclo_${ciclo}_f0_sensor', 'sensor_temp')">
+          <div id="ciclo_${ciclo}_f0_sensor-list" class="suggestion-list"></div>
+        </div>
+        <button type="button" class="btn-na-quick" onclick="preencherNAGet('ciclo_${ciclo}_f0', 'ciclo_${ciclo}_f0_sensor')">N/A</button>
+      </div>
+    </div>
+
+    <div class="field"><label>Status</label><select name="ciclo_${ciclo}_status"><option></option><option>Aprovado</option><option>Reprovado</option></select></div>
+  </div>
+
+  ${mostrarBioQuim ? `
+  <div class="sub-box">
+    <div class="sub-title">Controle Biológico / Químico (Indicadores)</div>
+    <div class="grid">
+      <div class="field"><label>Letalidade</label>
+        <div style="display:flex; align-items:center; gap:10px; height: 43px;">
+          <div class="custom-toggle" data-state="0" onclick="cycleToggle(this)" title="Clique: OK → NA → limpar"><span class="toggle-content"></span></div>
+          <span style="font-size:13px; color:#555;">Status (OK / NA)</span>
+          <input type="hidden" name="ciclo_${ciclo}_letalidade_estado" value="0">
+        </div>
+      </div>
+
+      <div class="field"><label>Marca / Modelo</label><input type="text" name="ciclo_${ciclo}_marca_modelo"></div>
+      <div class="field"><label>Lote / Validade</label><input type="text" name="ciclo_${ciclo}_lote_validade"></div>
+      <div class="field"><label>Valor de Z</label><input type="text" inputmode="decimal" name="ciclo_${ciclo}_valor_z"></div>
+      <div class="field"><label>Valor de D</label><input type="text" inputmode="decimal" id="ciclo_${ciclo}_valor_d" name="ciclo_${ciclo}_valor_d" oninput="calcularF0Ciclo(${ciclo})"></div>
+      <div class="field"><label>População inicial</label><input type="text" id="ciclo_${ciclo}_pop_inicial" name="ciclo_${ciclo}_pop_inicial" placeholder="Ex: 1,5X10⁶" oninput="calcularF0Ciclo(${ciclo})"></div>
+      <input type="hidden" id="ciclo_${ciclo}_pop_final" name="ciclo_${ciclo}_pop_final" value="10^-6">
+      <div class="field"><label>Valor de F0</label><input type="text" inputmode="decimal" id="ciclo_${ciclo}_valor_f0" name="ciclo_${ciclo}_valor_f0"></div>
+    </div>
+  </div>
+  ` : ''}
+  `;
+  area.appendChild(div);
+}
+
+function limparFormularioCompleto(){
+  if(!confirm('Limpar todo o formulário? Esta ação apaga também o rascunho salvo neste aparelho.')) return;
+  document.getElementById('formulario').reset();
+  limparCanvas();
+  
+  document.getElementById('ciclos').innerHTML = '';
+  ciclo = 0;
+
+  document.querySelectorAll('.custom-toggle').forEach(t => {
+    t.dataset.state = '0';
+    t.classList.remove('ok', 'na');
+    const content = t.querySelector('.toggle-content');
+    if(content) content.textContent = '';
+  });
+  try { localStorage.removeItem('formularioQualificacao_rascunho'); } catch(e){}
+  formularioAlterado = false;
+  atualizarCertificado();
+}
+
+/* ========== VALIDAÇÃO DE CAMPOS VAZIOS ANTES DE IMPRIMIR ========== */
+function verificarCamposEVazar(){
+  camposVaziosGlobais = [];
+  const formElements = document.getElementById('formulario').elements;
+
+  // 1. Valida inputs numéricos, de texto, datas, selects e textareas
+  for (let el of formElements) {
+    if (el.name && ['text', 'textarea', 'select-one', 'date', 'time', 'number'].includes(el.type)) {
+      if (!el.value || el.value.trim() === '') {
+        let labelText = el.name;
+        const fieldContainer = el.closest('.field');
+        if (fieldContainer) {
+          const lbl = fieldContainer.querySelector('label');
+          if (lbl) labelText = lbl.textContent.trim();
+        }
+        camposVaziosGlobais.push({ name: el.name, label: labelText });
+      }
+    }
+  }
+
+  // 2. Valida os Custom Toggles (Checkboxes personalizados com data-state)
+  const customToggles = document.querySelectorAll('.custom-toggle');
+  customToggles.forEach(t => {
+    const state = t.dataset.state || '0';
+    if (state === '0') {
+      let labelText = 'Opção não selecionada';
+      const grupoItem = t.closest('.grupo-item');
+      const checkLabel = t.closest('.check');
+      const fieldContainer = t.closest('.field');
+
+      if (grupoItem) {
+        const str = grupoItem.querySelector('strong');
+        if (str) labelText = 'Grupos utilizados: ' + str.textContent.trim();
+      } else if (checkLabel) {
+        labelText = 'Evidências: ' + checkLabel.textContent.trim();
+      } else if (fieldContainer) {
+        const lbl = fieldContainer.querySelector('label');
+        if (lbl) labelText = lbl.textContent.trim();
+      }
+
+      camposVaziosGlobais.push({ name: 'custom_toggle', label: labelText });
+    }
+  });
+
+  const modal = document.getElementById('modal-alerta');
+  const corpo = document.getElementById('modal-corpo');
+  const btnVerCampos = document.getElementById('btn-ver-campos');
+
+  if (camposVaziosGlobais.length > 0) {
+    corpo.innerHTML = `Existem <strong>${camposVaziosGlobais.length}</strong> campo(s) ou opção(ões) não selecionada(s) no formulário. O que deseja fazer?`;
+    btnVerCampos.style.display = 'inline-block';
+    modal.style.display = 'flex';
+  } else {
+    prepararImpressao();
+  }
+}
+
+function alternarListaCamposVazios() {
+  const corpo = document.getElementById('modal-corpo');
+  let html = `<p><strong>Campos e opções não preenchidos:</strong></p><ul>`;
+  camposVaziosGlobais.forEach(item => {
+    html += `<li>${item.label}</li>`;
+  });
+  html += `</ul>`;
+  corpo.innerHTML = html;
+  document.getElementById('btn-ver-campos').style.display = 'none';
+}
+
+function fecharModalAlerta() {
+  document.getElementById('modal-alerta').style.display = 'none';
+}
+
+function limparEspelhosImpressao(){
+  document.querySelectorAll('.textarea-print-mirror').forEach(function(el){ el.remove(); });
+  document.querySelectorAll('textarea').forEach(function(ta){
+    ta.style.display = '';
+  });
+}
+
+function prepararImpressao(){
+  limparEspelhosImpressao();
+  document.querySelectorAll('textarea').forEach(function(ta){
+    var mirror = document.createElement('div');
+    mirror.className = 'textarea-print-mirror';
+    // Preserva quebras de linha e espaços
+    mirror.textContent = ta.value || '';
+    // Se estiver vazio, deixa um espaço mínimo
+    if(!ta.value || !ta.value.trim()){
+      mirror.innerHTML = '&nbsp;';
+    }
+    ta.parentNode.insertBefore(mirror, ta.nextSibling);
+  });
+  setTimeout(function(){ window.print(); }, 100);
+}
+
+// Restaura a tela depois de imprimir / cancelar
+window.addEventListener('afterprint', limparEspelhosImpressao);
+
+
+function prosseguirImpressao() {
+  fecharModalAlerta();
+  prepararImpressao();
+}
+
+/* ========== CANVAS DE DESENHO ========== */
+function initCanvas(){
+  canvas = document.getElementById('canvas-disposicao');
+  if(!canvas) return;
+  ctx = canvas.getContext('2d');
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const data = document.getElementById('canvas-data')?.value;
+  if(data){
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img,0,0);
+    };
+    img.src = data;
+  } else {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+
+  canvas.onmousedown = null;
+  canvas.onmousemove = null;
+  canvas.onmouseup = null;
+  canvas.onmouseleave = null;
+  canvas.ontouchstart = null;
+  canvas.ontouchmove = null;
+  canvas.ontouchend = null;
+
+  canvas.onmousedown = (e) => { startDraw(e); };
+  canvas.onmousemove = (e) => { draw(e); };
+  canvas.onmouseup = () => { stopDraw(); };
+  canvas.onmouseleave = () => { stopDraw(); };
+
+  canvas.ontouchstart = (e) => { e.preventDefault(); startDraw(e.touches[0]); };
+  canvas.ontouchmove = (e) => { e.preventDefault(); draw(e.touches[0]); };
+  canvas.ontouchend = () => { stopDraw(); };
+}
+
+function getPos(e){
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY
+  };
+}
+
+function startDraw(e){
+  drawing = true;
+  const pos = getPos(e);
+  lastX = pos.x;
+  lastY = pos.y;
+}
+
+function draw(e){
+  if(!drawing) return;
+  const pos = getPos(e);
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(pos.x, pos.y);
+
+  if(drawMode === 'eraser'){
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.strokeStyle = 'rgba(0,0,0,1)';
+    ctx.lineWidth = parseInt(document.getElementById('draw-size').value) * 3;
+  } else {
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = document.getElementById('draw-color').value;
+    ctx.lineWidth = parseInt(document.getElementById('draw-size').value);
+  }
+  ctx.stroke();
+
+  lastX = pos.x;
+  lastY = pos.y;
+}
+
+function stopDraw(){
+  drawing = false;
+  atualizarCanvasData();
+}
+
+function setDrawMode(mode){
+  drawMode = mode;
+  document.getElementById('btn-pen').classList.toggle('active', mode === 'pen');
+  document.getElementById('btn-eraser').classList.toggle('active', mode === 'eraser');
+  if(canvas) canvas.style.cursor = mode === 'eraser' ? 'cell' : 'crosshair';
+}
+
+function limparCanvas(){
+  if(!ctx) return;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  atualizarCanvasData();
+}
+
+function atualizarCanvasData(){
+  const hidden = document.getElementById('canvas-data');
+  if(hidden && canvas){
+    hidden.value = canvas.toDataURL('image/png');
+  }
+}
+
+function importarImagem(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      const x = (canvas.width - w) / 2;
+      const y = (canvas.height - h) / 2;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img, x, y, w, h);
+      atualizarCanvasData();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+/* ========== LISTAS SALVAS ========== */
+const camposComLista = ['cliente','setor','equipamento','fabricante','tag','validador','protocolo','calibracao','temp','umidade','intervalo','setpoint','setpoint_umidade','estudo','sensor_temp','sensor_ur'];
+
+const listasPadrao = {
+  cliente: ['Eurofarma','Libbs','FarmaUSA','Momenta'],
+  setor: ['Microbiologia','Controle de qualidade','Físico-químico','Biotec','Equifar'],
+  equipamento: ['Refrigerador','Freezer','Estufa','Autoclave','Túnel de Despiro'],
+  fabricante: ['Panasonic','Labor Estable','Etick Tecnologi','Baumer','Hogner','Group MMM'],
+  validador: ['K-001','K-002','K-003','K-004','K-005','K-006','K-007','K-008','K-009','K-010','K-011','K-012','K-013','K-014','K-015'],
+  protocolo: ['PQ-V-QD-','PQ-VI-QD-','PQ-VII-QD-','PQ-IX-QD-','PQ-X-QD-','PQ-XIII-QD-','PQ-MO-QD-'],
+  calibracao: ['0,0°C á 100,0°C','90,0°C á 140,0°C'],
+  temp: ['5,0°C','40,0°C','50,0°C','121,0°C','134,0°C','290,0°C','340,0°C','N/A'],
+  umidade: ['N/A','40%ur','45%ur','60%ur'],
+  intervalo: ['60 seg.','30 seg.','10 seg.'],
+  setpoint: ['-80,0°C','-70,0°C','-20,0°C','5,0°C', '121,0°C', '280,0°C', '320,0°C'],
+  setpoint_umidade: ['N/A', '40%', '50%', '60%', '75%'],
+  estudo: ['24 horas ', 'Abertura de Porta', 'Queda de energia', 'Dustribuição de temperatura', 'Penetração de Calor', 'SIP'],
+  sensor_temp: ['T-01', 'T-02', 'T-03', 'T-04', 'T-05', 'T-06', 'T-07', 'T-08', 'T-09', 'T-10', 'T-11', 'T-12'],
+  sensor_ur: ['UR-01', 'UR-02', 'UR-03', 'UR-04', 'UR-05', 'UR-06', 'UR-07', 'UR-08', 'UR-09', 'UR-10', 'UR-11', 'UR-12']
+};
+
+function inicializarListasPadrao(){
+  Object.keys(listasPadrao).forEach(campo => {
+    const chave = 'lista_' + campo;
+    let lista = [];
+    try {
+      lista = JSON.parse(localStorage.getItem(chave) || '[]');
+      if(!Array.isArray(lista)) lista = [];
+    } catch(e){ lista = []; }
+
+    let mudou = false;
+    listasPadrao[campo].forEach(item => {
+      if(!lista.includes(item)){
+        lista.push(item);
+        mudou = true;
+      }
+    });
+    if(mudou || lista.length === 0){
+      localStorage.setItem(chave, JSON.stringify(lista));
+    }
+  });
+}
+
+function getLista(campo){
+  try { return JSON.parse(localStorage.getItem('lista_'+campo) || '[]'); }
+  catch(e){ return []; }
+}
+
+function salvarOpcao(chave, idCustomId){
+  const inputId = idCustomId || chave;
+  const input = document.getElementById(inputId);
+  const valor = (input?.value || '').trim();
+  if(!valor){ alert('Digite um valor antes de adicionar à lista.'); return; }
+  let lista = getLista(chave);
+  if(!lista.includes(valor)) lista.push(valor);
+  localStorage.setItem('lista_'+chave, JSON.stringify(lista));
+  mostrarSugestoes(inputId, chave);
+  alert('"' + valor + '" foi adicionado à lista.');
+}
+
+function removerOpcao(chave, valor){
+  if(!confirm('Remover "' + valor + '" da lista?\n\nEssa ação não pode ser desfeita.')) return;
+  let lista = getLista(chave).filter(v => v !== valor);
+  localStorage.setItem('lista_'+chave, JSON.stringify(lista));
+  
+  camposComLista.forEach(c => {
+    const box = document.getElementById(c+'-list');
+    if(box) mostrarSugestoes(c, c);
+  });
+}
+
+function mostrarSugestoes(idInput, chaveCustom){
+  const input = document.getElementById(idInput);
+  const chave = chaveCustom || idInput;
+  const box = document.getElementById(idInput+'-list');
+  if(!input || !box) return;
+  const termo = input.value.toLowerCase().trim();
+  const lista = getLista(chave).filter(v => v.toLowerCase().includes(termo));
+  box.innerHTML = '';
+  lista.forEach(valor => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = valor;
+    b.title = 'Clique para selecionar • Segure ~1,2s para apagar';
+
+    let pressTimer = null;
+    let longPressed = false;
+    let moved = false;
+    let startX = 0, startY = 0;
+    const MOVE_THRESHOLD = 8;
+
+    const startPress = (e) => {
+      longPressed = false;
+      moved = false;
+      const point = e.touches ? e.touches[0] : e;
+      startX = point.clientX;
+      startY = point.clientY;
+
+      pressTimer = setTimeout(() => {
+        longPressed = true;
+        pressTimer = null;
+        removerOpcao(chave, valor);
+      }, 1200);
+    };
+
+    const movePress = (e) => {
+      const point = e.touches ? e.touches[0] : e;
+      const dx = Math.abs(point.clientX - startX);
+      const dy = Math.abs(point.clientY - startY);
+      if(dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD){
+        moved = true;
+        if(pressTimer){
+          clearTimeout(pressTimer);
+          pressTimer = null;
+        }
+      }
+    };
+
+    const cancelPress = () => {
+      if(pressTimer){
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+    };
+
+    const selecionar = (e) => {
+      if(e){
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      input.value = valor;
+      box.innerHTML = '';
+      input.blur();
+      document.body.style.pointerEvents = 'none';
+      setTimeout(() => {
+        document.body.style.pointerEvents = '';
+      }, 350);
+    };
+
+    const endPress = (e) => {
+      if(pressTimer){
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+      if(!longPressed && !moved){
+        selecionar(e);
+      }
+    };
+
+    b.addEventListener('mousedown', startPress);
+    b.addEventListener('mousemove', movePress);
+    b.addEventListener('mouseup', endPress);
+    b.addEventListener('mouseleave', cancelPress);
+
+    b.addEventListener('touchstart', startPress, {passive: true});
+    b.addEventListener('touchmove', movePress, {passive: true});
+    b.addEventListener('touchend', (e) => {
+      endPress(e);
+    }, {passive: false});
+    b.addEventListener('touchcancel', cancelPress);
+
+    b.addEventListener('click', (e) => {
+      if(!longPressed && !moved){
+        selecionar(e);
+      }
+    });
+
+    box.appendChild(b);
+  });
+}
+
+document.addEventListener('click', e => {
+  camposComLista.forEach(c => {
+    const box = document.getElementById(c+'-list');
+    const input = document.getElementById(c);
+    if(box && input && !box.parentElement.contains(e.target)) box.innerHTML = '';
+  });
+});
+
+/* ========== SALVAR / CARREGAR VIA ARQUIVO JSON ========== */
+async function salvar(){
+  atualizarCanvasData();
+  
+  const formData = {};
+  const formElements = document.getElementById('formulario').elements;
+  
+  for (let el of formElements) {
+    if (el.name && !['radio', 'checkbox'].includes(el.type)) {
+      formData[el.name] = el.value;
+    }
+  }
+
+  const customToggles = [];
+  document.querySelectorAll('.custom-toggle').forEach((t, index) => {
+    customToggles.push({ index: index, state: t.dataset.state || '0' });
+  });
+  formData._customToggles = customToggles;
+
+  const statusChecked = document.querySelector('input[name="status"]:checked');
+  formData._status = statusChecked ? statusChecked.value : '';
+
+  formData._ciclosHTML = document.getElementById('ciclos').innerHTML;
+  formData._cicloContador = ciclo;
+
+  const jsonString = JSON.stringify(formData, null, 2);
+  const blob = new Blob([jsonString], { type: 'application/json' });
+  const nomeSugerido = `qualificacao_${formData.cliente || 'formulario'}_${new Date().toISOString().slice(0,10)}.json`.replace(/[^a-z0-9_.-]/gi, '_');
+
+  if (window.showSaveFilePicker) {
+    try {
+      const opts = {
+        suggestedName: nomeSugerido,
+        types: [{
+          description: 'Arquivo de Formulário JSON',
+          accept: { 'application/json': ['.json'] },
+        }],
+      };
+      const handle = await window.showSaveFilePicker(opts);
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      alert('Arquivo salvo com sucesso!');
+      return;
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Erro ao salvar com File Picker:', err);
+      }
+      return;
+    }
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nomeSugerido;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  alert('Formulário exportado para a pasta de downloads do dispositivo.');
+}
+
+async function carregar(){
+  if (window.showOpenFilePicker) {
+    try {
+      const opts = {
+        multiple: false,
+        types: [{
+          description: 'Arquivo de Formulário JSON',
+          accept: { 'application/json': ['.json'] },
+        }],
+      };
+      const [handle] = await window.showOpenFilePicker(opts);
+      const file = await handle.getFile();
+      const text = await file.text();
+      processarDadosCarregados(text);
+      return;
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Erro ao abrir com File Picker:', err);
+      }
+      return;
+    }
+  }
+
+  let fileInput = document.getElementById('dynamic-file-input');
+  if (!fileInput) {
+    fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.id = 'dynamic-file-input';
+    fileInput.accept = '.json';
+    fileInput.style.display = 'none';
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        processarDadosCarregados(event.target.result);
+      };
+      reader.readAsText(file);
+      fileInput.value = '';
+    };
+    document.body.appendChild(fileInput);
+  }
+  fileInput.click();
+}
+
+function processarDadosCarregados(jsonText) {
+  try {
+    const data = JSON.parse(jsonText);
+
+    if (data._ciclosHTML !== undefined) {
+      document.getElementById('ciclos').innerHTML = data._ciclosHTML;
+      ciclo = data._cicloContador || 0;
+    }
+
+    const formElements = document.getElementById('formulario').elements;
+    for (let el of formElements) {
+      if (el.name && data[el.name] !== undefined) {
+        el.value = data[el.name];
+      }
+    }
+
+    if (data._customToggles) {
+      const toggles = document.querySelectorAll('.custom-toggle');
+      data._customToggles.forEach(item => {
+        if (toggles[item.index]) {
+          const t = toggles[item.index];
+          t.dataset.state = item.state;
+          const content = t.querySelector('.toggle-content');
+          t.classList.remove('ok', 'na');
+          let state = parseInt(item.state);
+          if (state === 1) {
+            content.textContent = '✓';
+            t.classList.add('ok');
+          } else if (state === 2) {
+            content.textContent = 'NA';
+            t.classList.add('na');
+          } else {
+            content.textContent = '';
+          }
+        }
+      });
+    }
+
+    if (data._status) {
+      const radio = document.querySelector(`input[name="status"][value="${data._status}"]`);
+      if (radio) radio.checked = true;
+    }
+
+    setTimeout(() => {
+      initCanvas();
+    }, 50);
+
+    atualizarCertificado();
+    if(!window._restaurandoRascunho){
+      alert('Formulário carregado com sucesso!');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Erro ao processar o arquivo JSON. O arquivo pode estar corrompido ou em formato inválido.');
+  }
+}
+
+
+/* ========== CERTIFICADO (QD-mêsnúmero/ano) ========== */
+function atualizarCertificado(){
+  const dataEl = document.getElementById('data-inicio') || document.querySelector('input[name="inicio"]');
+  const mesEl = document.getElementById('cert-mes');
+  const anoEl = document.getElementById('cert-ano');
+  const numEl = document.getElementById('cert-numero');
+  const fullEl = document.getElementById('certificado-completo');
+  const printEl = document.getElementById('cert-print-full');
+  if(!mesEl || !anoEl) return;
+
+  let mes = '--';
+  let ano = '----';
+  const val = dataEl ? dataEl.value : '';
+  if(val && val.length >= 7){
+    const parts = val.split('-');
+    if(parts.length >= 2){
+      ano = parts[0];
+      mes = parts[1];
+    }
+  }
+  mesEl.textContent = mes;
+  anoEl.textContent = ano;
+
+  const num = (numEl && numEl.value) ? numEl.value.trim() : '';
+  let texto = '';
+  if(mes !== '--' && ano !== '----'){
+    texto = 'QD-' + mes + (num || '___') + '/' + ano;
+  } else if(num){
+    texto = 'QD-' + num;
+  } else {
+    texto = 'QD-----/----';
+  }
+  if(fullEl){
+    fullEl.value = (mes !== '--' && ano !== '----' && num) ? ('QD-' + mes + num + '/' + ano) : (texto.indexOf('_') >= 0 ? '' : texto);
+  }
+  if(printEl) printEl.textContent = texto;
+}
+
+
+
+
+/* ========== IMPORTAR EXCEL VALIDADOR 2000 ========== */
+function _vFmtNum(n, dec){
+  if(n === null || n === undefined || isNaN(n)) return '';
+  var d = (dec !== undefined) ? dec : 2;
+  return Number(n).toFixed(d).replace('.', ',');
+}
+function _vFmtTime(t){
+  if(t === null || t === undefined) return '';
+  if(typeof t === 'string') return t;
+  if(typeof t === 'number'){
+    var total = Math.round(t * 24 * 3600);
+    var h = Math.floor(total/3600)%24, m = Math.floor((total%3600)/60), s = total%60;
+    return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  }
+  if(t instanceof Date){
+    return String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0');
+  }
+  if(typeof t === 'object' && t.H !== undefined){
+    return String(t.H).padStart(2,'0')+':'+String(t.M||0).padStart(2,'0')+':'+String(t.S||0).padStart(2,'0');
+  }
+  return '';
+}
+function _vIsValidYear(d){
+  if(!(d instanceof Date) || isNaN(d.getTime())) return false;
+  var y = d.getFullYear();
+  return y >= 2000 && y <= 2100;
+}
+function _vFmtDate(d){
+  if(!d) return '';
+  if(d instanceof Date){
+    if(!_vIsValidYear(d)) return ''; // evita 1899/1869 de horário Excel
+    var y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+    return y+'-'+m+'-'+day;
+  }
+  if(typeof d === 'string'){
+    var m1 = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(m1) return m1[1]+'-'+m1[2]+'-'+m1[3];
+    var meses = {jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12,
+      feb:2,apr:4,may:5,aug:8,sep:9,oct:10,dec:12};
+    var m2 = d.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})/);
+    if(m2){
+      var mon = meses[m2[2].toLowerCase().substring(0,3)];
+      if(mon) return m2[3]+'-'+String(mon).padStart(2,'0')+'-'+String(m2[1]).padStart(2,'0');
+    }
+  }
+  if(typeof d === 'number' && d > 20000){ // serial de data real (~1955+)
+    var epoch = new Date(Date.UTC(1899,11,30));
+    var dt = new Date(epoch.getTime() + d * 86400000);
+    return _vFmtDate(dt);
+  }
+  return '';
+}
+function _vSet(name, value){
+  if(value === null || value === undefined) return;
+  var el = document.querySelector('[name="'+name+'"]') || document.getElementById(name);
+  if(!el) return;
+  el.value = value;
+  el.dispatchEvent(new Event('input', {bubbles:true}));
+  el.dispatchEvent(new Event('change', {bubbles:true}));
+}
+function _vNorm(s){
+  return String(s||'').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,' ').trim();
+}
+function _vLabelMatch(label, patterns){
+  var n = _vNorm(label);
+  for(var i=0;i<patterns.length;i++){
+    if(n.indexOf(_vNorm(patterns[i])) >= 0) return true;
+  }
+  return false;
+}
+function _vFindEvent(cycles, patterns, occurrence){
+  occurrence = occurrence || 1;
+  var count = 0;
+  for(var i=0;i<cycles.length;i++){
+    if(_vLabelMatch(cycles[i].label, patterns)){
+      count++;
+      if(count === occurrence) return cycles[i];
+    }
+  }
+  return null;
+}
+function _vFindEventAfter(cycles, afterPatterns, targetPatterns){
+  var foundAfter = false;
+  for(var i=0;i<cycles.length;i++){
+    if(!foundAfter){
+      if(_vLabelMatch(cycles[i].label, afterPatterns)) foundAfter = true;
+      continue;
+    }
+    // ignora study end / study start / aquecimento
+    if(_vLabelMatch(cycles[i].label, ['Study Start','Study End','Aquecimento','Heating'])) continue;
+    if(targetPatterns && targetPatterns.length){
+      if(_vLabelMatch(cycles[i].label, targetPatterns)) return cycles[i];
+    } else {
+      return cycles[i]; // próximo evento de fase
+    }
+  }
+  return null;
+}
+function _vDetectTipo(userLine, cycleLabels, meta){
+  meta = meta || {};
+  var u = _vNorm((userLine||'') + ' ' + (meta.comments_line||''));
+  var labs = (cycleLabels||[]).map(_vNorm);
+  var has = function(sub){ return labs.some(function(l){ return l.indexOf(sub)>=0; }); };
+  // Porta / Queda pelo EVENTO do ciclo (prioridade)
+  if(has('porta aberta') || has('porta fechada') || meta.porta_hint || u.indexOf('abertura de porta')>=0) return 'porta';
+  if(has('desligado') || has('religado') || has('queda de energia') || has('ligado/estabil') || has('ligado') || meta.queda_hint || u.indexOf('queda de energia')>=0) return 'queda';
+  if(has('esteriliz')) return 'esterilizacao';
+  if(has('despirogen') || u.indexOf('despirogen')>=0 || u.indexOf('tunel')>=0 || u.indexOf('fase carreg')>=0 || u.indexOf('esteira')>=0) return 'tunel';
+  if(u.indexOf('esteriliz')>=0 || u.indexOf('autoclave')>=0 || u.indexOf('tampas')>=0 || u.indexOf('descontamina')>=0) return 'esterilizacao';
+  if(u.indexOf('24h')>=0 || u.indexOf('24 h')>=0 || u.indexOf('4h')>=0 || u.indexOf('4 h')>=0 || u.indexOf('distribuicao')>=0 || u.indexOf('monitoramento')>=0) return '24h';
+  var faseExtra = labs.filter(function(l){ return l && l.indexOf('study')<0; });
+  if(has('study start') && has('study end') && faseExtra.length <= 1) return '24h';
+  return '24h';
+}
+function _vSimplifyEstudo(userLine, tipo){
+  var u = (userLine||'').replace(/^User\s*-?\s*/i,'').trim();
+  if(tipo === 'porta') return 'Abertura de porta';
+  if(tipo === 'queda') return 'Queda de energia';
+  if(tipo === '24h'){
+    var cargaC = /c\s*\/\s*carga/i.test(u);
+    var cargaS = /s\s*\/\s*carga/i.test(u);
+    var h4 = /(?:^|[^\d])4\s*h/i.test(u);
+    if(h4 && cargaC) return '4h C/Carga';
+    if(h4 && cargaS) return '4h S/Carga';
+    if(h4) return '4h';
+    if(cargaC) return '24h C/Carga';
+    if(cargaS) return '24h S/Carga';
+    return '24h';
+  }
+  if(tipo === 'tunel'){
+    var m = u.match(/(descarregando|carregando|carregado)[\s\S]{0,20}?formato\s*\d+/i);
+    if(m) return m[0].replace(/\s+/g,' ').replace(/\s*-\s*/g,' ').trim();
+    m = u.match(/formato\s*\d+/i);
+    if(m){
+      var fase = u.match(/(descarregando|carregando|carregado)/i);
+      return ((fase?fase[1]+' ':'') + m[0]).replace(/\s+/g,' ').trim();
+    }
+    return 'Túnel';
+  }
+  if(tipo === 'esterilizacao'){
+    // 1) Receita N + descrição
+    var mRec = u.match(/receita\s+(\d+)[\s\-]*([^\-\n]{0,45})/i);
+    if(mRec){
+      var extra = (mRec[2]||'').replace(/\s+/g,' ').trim()
+        .replace(/\b(m[ií]nima|m[aá]xima)\b/ig,'').replace(/\btempo\b.*/ig,'').replace(/\s+/g,' ').trim();
+      return ('Receita ' + mRec[1] + (extra ? ' - ' + extra : '')).substring(0,55).trim();
+    }
+    // 2) Carga de ...
+    var mCarga = u.match(/carga\s+de\s+([^\-\n]{3,45})/i);
+    if(mCarga){
+      var carga = mCarga[1].replace(/\s+/g,' ').trim()
+        .replace(/\b(m[ií]nima|m[aá]xima)\b/ig,'').replace(/\s+/g,' ').trim();
+      return ('Carga de ' + carga).substring(0,55).trim();
+    }
+    // 3) Máx/Mín + tipo de carga explícito
+    var mTipo = u.match(/\b((?:m[aá]x|m[ií]n)(?:ima)?\s+(?:tampas|material|carga|vidraria|borracha)[^\-\n]{0,30})/i);
+    if(mTipo) return mTipo[1].replace(/\s+/g,' ').trim().substring(0,50);
+    return u.split(/-\s*Setpoint/i)[0].split(/-\s*Tempo/i)[0]
+      .replace(/^penetra[cç][aã]o[^\-]*-/i,'').replace(/\s+/g,' ').trim().substring(0,50) || 'Esterilização';
+  }
+  return u.split(/-\s*Setpoint/i)[0].replace(/\s+/g,' ').trim().substring(0,50);
+}
+function _vParseCycles(sheet){
+  var rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:null, raw:true});
+  var meta = {study_name:'', company:'', vessel:'', protocol:'', validator_sn:'', user_line:'', comments_line:'', queda_hint:false, porta_hint:false, setpoint_temp:'', setpoint_ur:''};
+  var cycles = [];
+  var currentDate = null;
+  var eventNames = ['Study Start','Study End','Monitoração','Monitoracao','Porta Aberta','Porta Fechada','Queda de Energia','Aquecimento','Esterilização','Esterilizacao','Resfriamento','Despirogenização','Despirogenizacao','Secagem','Cooling','Heating','Exposure','Sterilization','Exhaust','Purge','Equalização','Equalizacao','Vácuo','Vacuo','Drying'];
+  var eventNamesNorm = eventNames.map(_vNorm);
+  for(var r=0;r<rows.length;r++){
+    var row = rows[r] || [];
+    for(var c=0;c<row.length;c++){
+      var v = row[c];
+      if(v === 'Study Name:' && row[c+1]) meta.study_name = String(row[c+1]);
+      if(v === 'Company:' && row[c+1]) meta.company = String(row[c+1]);
+      if(v === 'Vessel ID:' && row[c+1]) meta.vessel = String(row[c+1]);
+      if(v === 'SOP/Protocol #:' && row[c+1]) meta.protocol = String(row[c+1]);
+      if(v === 'Validator SN:' && row[c+1]) meta.validator_sn = String(row[c+1]);
+      if(v === 'Comments:' && row[c+1] && String(row[c+1]).trim()) {
+        meta.comments_line = String(row[c+1]).trim();
+        if(/queda/i.test(meta.comments_line)) meta.queda_hint = true;
+        if(/abertura/i.test(meta.comments_line)) meta.porta_hint = true;
+      }
+      if(typeof v === 'string' && v.indexOf('User') === 0) meta.user_line = v.trim();
+      if(typeof v === 'string' && /queda\s+de\s+energia/i.test(v)) meta.queda_hint = true;
+      if(typeof v === 'string' && /abertura\s+de\s+porta/i.test(v)) meta.porta_hint = true;
+      if(typeof v === 'string' && /^Comments:$/i.test(String(v).trim()) === false){
+        // linha de comments com descrição do estudo
+        if(/simula[cç][aã]o|queda|abertura|monitoramento|distribui/i.test(v) && v.length > 10 && v.indexOf('User') !== 0){
+          if(!meta.comments_line) meta.comments_line = v.trim();
+        }
+      }
+    }
+    for(var c=0;c<row.length;c++){
+      var v = row[c];
+      if(typeof v === 'string' && /^\d{1,2}-[A-Za-z]{3}-\d{4}$/.test(v)) currentDate = v;
+      if(typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) currentDate = v;
+      // só aceita Date com ano válido como cabeçalho de data
+      if(v instanceof Date && _vIsValidYear(v)) currentDate = v;
+    }
+    var tval = null, label = null;
+    for(var c=0;c<row.length;c++){
+      var v = row[c];
+      if(typeof v === 'number' && v > 0 && v < 1) tval = v;
+      if(v && typeof v === 'object' && v.H !== undefined) tval = v;
+      if(v instanceof Date) tval = v;
+      if(typeof v === 'string'){
+        var vn = _vNorm(v);
+        if(eventNamesNorm.indexOf(vn) >= 0 || eventNames.indexOf(v) >= 0) label = v;
+        else if(/desligado|religado|estavel|ligado|fora do criterio|monitora|porta |queda|inicio|aquecimento|esteriliz|resfriamento|despirogen|secagem/i.test(vn)) label = v;
+        // também aceita fases comuns não listadas
+        else if(/^[A-ZÁÉÍÓÚÂÊÔÃÕÇ]/.test(v) && v.length < 40 && vn.indexOf('user')<0 && vn.indexOf('group')<0 && vn.indexOf('cycle')<0 && vn.indexOf('sensor')<0 && vn.indexOf('printed')<0 && vn.indexOf('lethality')<0 && vn.indexOf('base')<0 && vn.indexOf('comments')<0){
+          label = v;
+        }
+      }
+    }
+    if(tval !== null && label){
+      cycles.push({date: currentDate, time: tval, label: label});
+    }
+  }
+  var textoSP = ((meta.user_line||'') + ' ' + (meta.comments_line||'')).trim();
+  // Setpoint temperatura (aceita negativo: Setpoint -80,0°C)
+  var um = textoSP.match(/Setpoint[^0-9\-]*(-?\d+[.,]?\d*)\s*°?\s*C/i);
+  if(!um) um = textoSP.match(/Setpoint[^0-9\-]*(-?\d+[.,]?\d*)/i);
+  if(um){
+    var sp = um[1].replace('.', ',');
+    if(sp.indexOf('°') < 0) sp = sp + '°C';
+    meta.setpoint_temp = sp;
+  }
+  var uh = textoSP.match(/(-?\d+[.,]?\d*)\s*%\s*U?R/i);
+  if(uh) meta.setpoint_ur = uh[1].replace('.', ',') + '%';
+
+  return {meta: meta, cycles: cycles};
+}
+function _vFindSheet(wb, pred){
+  for(var i=0;i<wb.SheetNames.length;i++){
+    var n = wb.SheetNames[i];
+    if(pred(n)) return wb.Sheets[n];
+  }
+  return null;
+}
+function _vCalcsMinMax(sheet, tStart, tEnd){
+  if(!sheet) return {min:null, max:null, minSensor:'', maxSensor:''};
+  var rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:null, raw:true});
+  if(rows.length < 2) return {min:null, max:null, minSensor:'', maxSensor:''};
+  var minVal = null, maxVal = null, minSn='', maxSn='';
+  var globalMin = null, globalMax = null, gMinSn='', gMaxSn='';
+  for(var r=1;r<rows.length;r++){
+    var row = rows[r];
+    if(!row || row[0] === null) continue;
+    var t = row[0];
+    var mn = row[1], snMin = row[2], mx = row[3], snMax = row[4];
+    if(typeof mn === 'number' && (mx === null || mx === undefined)){
+      mx = mn; snMax = snMin || '';
+    }
+    if(typeof mn !== 'number' && typeof mx !== 'number') continue;
+    var inRange = true;
+    if(tStart && tEnd && t instanceof Date){
+      inRange = (t >= tStart && t <= tEnd);
+    }
+    if(typeof mn === 'number'){
+      if(globalMin === null || mn < globalMin){ globalMin = mn; gMinSn = (snMin||'')+''; }
+      if(inRange && (minVal === null || mn < minVal)){ minVal = mn; minSn = (snMin||'')+''; }
+    }
+    if(typeof mx === 'number'){
+      if(globalMax === null || mx > globalMax){ globalMax = mx; gMaxSn = (snMax||'')+''; }
+      if(inRange && (maxVal === null || mx > maxVal)){ maxVal = mx; maxSn = (snMax||'')+''; }
+    }
+  }
+  if(minVal === null){ minVal = globalMin; minSn = gMinSn; }
+  if(maxVal === null){ maxVal = globalMax; maxSn = gMaxSn; }
+  return {min:minVal, max:maxVal, minSensor: (minSn||'').trim(), maxSensor: (maxSn||'').trim()};
+}
+function _vPressureMinMax(sheet, tStart, tEnd){
+  if(!sheet) return {min:null, max:null};
+  var rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:null, raw:true});
+  var minVal=null, maxVal=null;
+  for(var r=1;r<rows.length;r++){
+    var row = rows[r];
+    if(!row) continue;
+    var t = row[0], v = row[1];
+    if(typeof v !== 'number') continue;
+    if(tStart && tEnd && t instanceof Date && (t < tStart || t > tEnd)) continue;
+    if(minVal === null || v < minVal) minVal = v;
+    if(maxVal === null || v > maxVal) maxVal = v;
+  }
+  return {min:minVal, max:maxVal};
+}
+function _vF0MinFromLethality(sheet){
+  // Última linha preenchida: menor letalidade acumulada entre sensores
+  if(!sheet) return {value:null, sensor:''};
+  var rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:null, raw:true});
+  if(rows.length < 2) return {value:null, sensor:''};
+  var header = rows[0] || [];
+  var last = null;
+  for(var r=rows.length-1;r>=1;r--){
+    var row = rows[r];
+    if(!row) continue;
+    // precisa ter pelo menos um número > 0 ou qualquer número de sensor
+    var hasNum = false;
+    for(var k=1;k<row.length;k++){
+      if(typeof row[k] === 'number'){ hasNum = true; break; }
+    }
+    if(hasNum){ last = row; break; }
+  }
+  if(!last) return {value:null, sensor:''};
+  var minIdx = -1, snMinIdx = -1, maxIdx = -1;
+  for(var i=0;i<header.length;i++){
+    var h = String(header[i]||'').trim();
+    if(/^min$/i.test(h)) minIdx = i;
+    if(/^max$/i.test(h)) maxIdx = i;
+    if(/s\/?n\s*min/i.test(h)) snMinIdx = i;
+  }
+  if(minIdx >= 0 && typeof last[minIdx] === 'number'){
+    return {value: last[minIdx], sensor: String(snMinIdx>=0 ? (last[snMinIdx]||'') : '').trim()};
+  }
+  var best = null, bestSn = '';
+  for(var i=1;i<header.length;i++){
+    if(i === minIdx || i === maxIdx || i === snMinIdx) continue;
+    var h = String(header[i]||'').trim();
+    if(/^min$/i.test(h) || /^max$/i.test(h) || /s\/?n/i.test(h) || /cycle/i.test(h)) continue;
+    if(typeof last[i] === 'number'){
+      if(best === null || last[i] < best){
+        best = last[i];
+        bestSn = h;
+      }
+    }
+  }
+  return {value: best, sensor: bestSn};
+}
+function _vTimeFromCycle(cycles, label, occurrence){
+  occurrence = occurrence || 1;
+  var count = 0;
+  for(var i=0;i<cycles.length;i++){
+    if(cycles[i].label === label){
+      count++;
+      if(count === occurrence) return cycles[i];
+    }
+  }
+  return null;
+}
+function _vCombineDateTime(dateVal, timeVal){
+  if(timeVal instanceof Date && _vIsValidYear(timeVal)) return timeVal;
+  var d = null;
+  if(dateVal instanceof Date && _vIsValidYear(dateVal)) d = new Date(dateVal.getTime());
+  else if(typeof dateVal === 'string'){
+    var iso = _vFmtDate(dateVal);
+    if(iso) d = new Date(iso + 'T00:00:00');
+  }
+  if(!d || isNaN(d.getTime())) return null;
+  if(timeVal instanceof Date){
+    d.setHours(timeVal.getHours(), timeVal.getMinutes(), timeVal.getSeconds(), 0);
+    return d;
+  }
+  if(typeof timeVal === 'number'){
+    var total = Math.round(timeVal * 24 * 3600);
+    d.setHours(Math.floor(total/3600)%24, Math.floor((total%3600)/60), total%60, 0);
+    return d;
+  }
+  if(timeVal && typeof timeVal === 'object' && timeVal.H !== undefined){
+    d.setHours(timeVal.H, timeVal.M||0, timeVal.S||0, 0);
+    return d;
+  }
+  return d;
+}
+function importarValidadorExcel(e){
+  var file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  if(typeof XLSX === 'undefined'){
+    alert('Biblioteca de Excel não carregou. Abra o site com internet uma vez ou verifique se xlsx.full.min.js está na pasta.');
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      var data = new Uint8Array(ev.target.result);
+      var wb = XLSX.read(data, {type:'array', cellDates:true});
+      var general = wb.Sheets['General'] || _vFindSheet(wb, function(n){ return n.toLowerCase()==='general'; });
+      if(!general){ alert('Planilha "General" não encontrada neste Excel.'); return; }
+      var parsed = _vParseCycles(general);
+      var meta = parsed.meta;
+      var cycles = parsed.cycles;
+      var labels = cycles.map(function(c){ return c.label; });
+      var tipo = _vDetectTipo(meta.user_line, labels, meta);
+
+      var groupInfo = [];
+      var gRows = XLSX.utils.sheet_to_json(general, {header:1, defval:null, raw:true});
+      for(var i=0;i<gRows.length;i++){
+        for(var j=0;j<(gRows[i]||[]).length;j++){
+          var cell = gRows[i][j];
+          if(typeof cell === 'string' && /^Group\d+/.test(cell)) groupInfo.push(cell);
+        }
+      }
+      var tempSheet = null, urSheet = null, pressSheet = null;
+      var g1calcs = _vFindSheet(wb, function(n){ return /group\s*1.*calc/i.test(n); });
+      var g2calcs = _vFindSheet(wb, function(n){ return /group\s*2.*calc/i.test(n); });
+      var g2raw = _vFindSheet(wb, function(n){ return /^group\s*2\s*$/i.test(String(n).trim()); });
+      var lethalitySheet = _vFindSheet(wb, function(n){ return /lethal/i.test(n); });
+      if(!lethalitySheet){
+        // fallback: qualquer sheet com "Lethality" no nome (espaços)
+        for(var si=0;si<wb.SheetNames.length;si++){
+          if(/lethal/i.test(wb.SheetNames[si])){ lethalitySheet = wb.Sheets[wb.SheetNames[si]]; break; }
+        }
+      }
+
+      var g1isTemp = groupInfo.some(function(g){ return /group\s*1/i.test(g) && /temp/i.test(g); });
+      var g2isTemp = groupInfo.some(function(g){ return /group\s*2/i.test(g) && /temp/i.test(g); });
+      var g2isUR = groupInfo.some(function(g){ return /group\s*2/i.test(g) && /umid/i.test(g); });
+      var g2isPress = groupInfo.some(function(g){ return /group\s*2/i.test(g) && /press/i.test(g); });
+
+      if(g1isTemp) tempSheet = g1calcs;
+      if(g2isTemp) tempSheet = g2calcs || tempSheet;
+      if(!tempSheet) tempSheet = g1calcs || g2calcs;
+      if(g2isUR) urSheet = g2calcs;
+      if(g1isTemp && g2calcs && !g2isTemp && !g2isPress) urSheet = urSheet || g2calcs;
+      if(g2isPress) pressSheet = g2raw || g2calcs;
+
+      var startEv = _vTimeFromCycle(cycles, 'Study Start');
+      var endEv = _vTimeFromCycle(cycles, 'Study End');
+      var calcFirst = null, calcLast = null;
+      if(tempSheet){
+        var trows = XLSX.utils.sheet_to_json(tempSheet, {header:1, defval:null, raw:true});
+        for(var ri=1;ri<trows.length;ri++){
+          if(trows[ri] && trows[ri][0] instanceof Date && _vIsValidYear(trows[ri][0])){
+            if(!calcFirst) calcFirst = trows[ri][0];
+            calcLast = trows[ri][0];
+          }
+        }
+      }
+
+      var dataCiclo = {
+        estudo: _vSimplifyEstudo(meta.user_line, tipo),
+        setpoint_temp: meta.setpoint_temp || '',
+        setpoint_umidade: meta.setpoint_ur || '',
+        data: '',
+        inicio: '',
+        final: '',
+        inicio_exp: 'N/A',
+        final_exp: 'N/A',
+        ciclo_normal: 'N/A',
+        min_c: '', max_c: '', min_c_sensor: '', max_c_sensor: '',
+        min_ur: '', max_ur: '', min_ur_sensor: '', max_ur_sensor: '',
+        f0: '', f0_sensor: ''
+      };
+
+      // DATA: prioriza timestamp válido dos calcs; senão data textual do ciclo
+      if(calcFirst){
+        dataCiclo.data = _vFmtDate(calcFirst);
+        dataCiclo.inicio = _vFmtTime(calcFirst);
+      } else if(startEv){
+        dataCiclo.data = _vFmtDate(startEv.date) || _vFmtDate(startEv.time);
+        dataCiclo.inicio = _vFmtTime(startEv.time);
+      }
+      if(calcLast){
+        dataCiclo.final = _vFmtTime(calcLast);
+      } else if(endEv){
+        dataCiclo.final = _vFmtTime(endEv.time);
+      }
+
+      if(tipo === '24h'){
+        dataCiclo.inicio_exp = 'N/A';
+        dataCiclo.final_exp = 'N/A';
+        dataCiclo.ciclo_normal = 'N/A';
+        dataCiclo.f0 = 'N/A'; dataCiclo.f0_sensor = 'N/A';
+        if(!urSheet) dataCiclo.setpoint_umidade = 'N/A';
+        var mm = _vCalcsMinMax(tempSheet, null, null);
+        dataCiclo.min_c = _vFmtNum(mm.min);
+        dataCiclo.max_c = _vFmtNum(mm.max);
+        dataCiclo.min_c_sensor = mm.minSensor;
+        dataCiclo.max_c_sensor = mm.maxSensor;
+        if(urSheet){
+          var um = _vCalcsMinMax(urSheet, null, null);
+          dataCiclo.min_ur = _vFmtNum(um.min);
+          dataCiclo.max_ur = _vFmtNum(um.max);
+          dataCiclo.min_ur_sensor = um.minSensor;
+          dataCiclo.max_ur_sensor = um.maxSensor;
+        } else {
+          dataCiclo.min_ur = 'N/A'; dataCiclo.max_ur = 'N/A';
+          dataCiclo.min_ur_sensor = 'N/A'; dataCiclo.max_ur_sensor = 'N/A';
+        }
+      } else if(tipo === 'porta' || tipo === 'queda'){
+        /* Início exposição: porta aberta / queda / desligado */
+        var expIni = _vFindEvent(cycles, ['Porta Aberta','Queda de Energia','Desligado']);
+        /* Fim exposição: porta fechada / religado / ligado */
+        var expFim = _vFindEvent(cycles, ['Porta Fechada','Religado','Ligado/Estabilizado','Ligado/Estabili','Ligado']);
+        /* Ciclo normal: volta ao critério (2ª monitoração / estável após evento) */
+        var cicloNorm = null;
+        if(tipo === 'porta'){
+          cicloNorm = _vFindEvent(cycles, ['Monitoração','Monitoracao'], 2);
+        } else {
+          // após religado: Monitoração ou Estável
+          cicloNorm = _vFindEventAfter(cycles,
+            ['Religado','Ligado/Estabilizado','Ligado/Estabili','Ligado','Desligado','Queda de Energia'],
+            ['Monitoração','Monitoracao','Estável','Estavel']);
+          // se não achar, tenta 2ª Monitoração/Estável no estudo
+          if(!cicloNorm){
+            var m2 = _vFindEvent(cycles, ['Monitoração','Monitoracao'], 2);
+            var e2 = _vFindEvent(cycles, ['Estável','Estavel'], 2);
+            cicloNorm = m2 || e2;
+          }
+        }
+        if(expIni) dataCiclo.inicio_exp = _vFmtTime(expIni.time);
+        else dataCiclo.inicio_exp = 'N/A';
+        if(expFim) dataCiclo.final_exp = _vFmtTime(expFim.time);
+        else dataCiclo.final_exp = 'N/A';
+        dataCiclo.ciclo_normal = cicloNorm ? _vFmtTime(cicloNorm.time) : 'N/A';
+        dataCiclo.min_c = 'N/A'; dataCiclo.max_c = 'N/A';
+        dataCiclo.min_c_sensor = 'N/A'; dataCiclo.max_c_sensor = 'N/A';
+        dataCiclo.min_ur = 'N/A'; dataCiclo.max_ur = 'N/A';
+        dataCiclo.min_ur_sensor = 'N/A'; dataCiclo.max_ur_sensor = 'N/A';
+        dataCiclo.f0 = 'N/A'; dataCiclo.f0_sensor = 'N/A';
+        if(!urSheet) dataCiclo.setpoint_umidade = 'N/A';
+      } else if(tipo === 'esterilizacao' || tipo === 'tunel'){
+        dataCiclo.ciclo_normal = 'N/A';
+        var expIni = _vFindEvent(cycles, ['Esterilização','Esterilizacao','Sterilization','Despirogenização','Despirogenizacao','Exposure']);
+        // Fim exposição: Resfriamento / Secagem / Cooling / Exhaust OU próximo evento após início da exposição
+        var expFim = _vFindEvent(cycles, ['Resfriamento','Secagem','Cooling','Exhaust','Drying','Purge']);
+        if(!expFim && expIni){
+          expFim = _vFindEventAfter(cycles, ['Esterilização','Esterilizacao','Sterilization','Despirogenização','Despirogenizacao','Exposure'], null);
+        }
+        if(expIni) dataCiclo.inicio_exp = _vFmtTime(expIni.time);
+        if(expFim) dataCiclo.final_exp = _vFmtTime(expFim.time);
+        else dataCiclo.final_exp = 'N/A';
+
+        dataCiclo.setpoint_umidade = urSheet ? (dataCiclo.setpoint_umidade || '') : 'N/A';
+
+        var baseDate = (calcFirst && _vIsValidYear(calcFirst)) ? calcFirst : (startEv && startEv.date);
+        var t0 = expIni ? _vCombineDateTime(expIni.date || baseDate, expIni.time) : null;
+        var t1 = expFim ? _vCombineDateTime(expFim.date || baseDate, expFim.time) : null;
+        // Se não achou fim, não usa janela aberta (evita min/max do estudo inteiro)
+        var mm3 = (t0 && t1) ? _vCalcsMinMax(tempSheet, t0, t1) : _vCalcsMinMax(tempSheet, null, null);
+        dataCiclo.min_c = _vFmtNum(mm3.min);
+        dataCiclo.max_c = _vFmtNum(mm3.max);
+        dataCiclo.min_c_sensor = mm3.minSensor;
+        dataCiclo.max_c_sensor = mm3.maxSensor;
+        if(pressSheet || g2raw){
+          var pm = _vPressureMinMax(pressSheet || g2raw, t0, t1);
+          dataCiclo.min_ur = _vFmtNum(pm.min, 4);
+          dataCiclo.max_ur = _vFmtNum(pm.max, 4);
+          dataCiclo.min_ur_sensor = 'P';
+          dataCiclo.max_ur_sensor = 'P';
+        } else if(urSheet){
+          var um3 = (t0 && t1) ? _vCalcsMinMax(urSheet, t0, t1) : _vCalcsMinMax(urSheet, null, null);
+          dataCiclo.min_ur = _vFmtNum(um3.min);
+          dataCiclo.max_ur = _vFmtNum(um3.max);
+          dataCiclo.min_ur_sensor = um3.minSensor;
+          dataCiclo.max_ur_sensor = um3.maxSensor;
+        } else {
+          dataCiclo.min_ur = 'N/A'; dataCiclo.max_ur = 'N/A';
+          dataCiclo.min_ur_sensor = 'N/A'; dataCiclo.max_ur_sensor = 'N/A';
+        }
+        if(lethalitySheet){
+          var f0 = _vF0MinFromLethality(lethalitySheet);
+          if(f0.value !== null){
+            dataCiclo.f0 = _vFmtNum(f0.value, 2);
+            dataCiclo.f0_sensor = f0.sensor;
+          } else {
+            dataCiclo.f0 = 'N/A'; dataCiclo.f0_sensor = 'N/A';
+          }
+        } else {
+          dataCiclo.f0 = 'N/A'; dataCiclo.f0_sensor = 'N/A';
+        }
+      } else {
+        // 24h e demais: ciclo normal NA, F0 NA se não houver lethality
+        dataCiclo.ciclo_normal = 'N/A';
+        if(!urSheet) dataCiclo.setpoint_umidade = 'N/A';
+        if(lethalitySheet){
+          var f0b = _vF0MinFromLethality(lethalitySheet);
+          if(f0b.value !== null){
+            dataCiclo.f0 = _vFmtNum(f0b.value, 2);
+            dataCiclo.f0_sensor = f0b.sensor;
+          } else {
+            dataCiclo.f0 = 'N/A'; dataCiclo.f0_sensor = 'N/A';
+          }
+        } else {
+          dataCiclo.f0 = 'N/A'; dataCiclo.f0_sensor = 'N/A';
+        }
+      }
+
+      // F0: sempre tenta se existir aba Lethality (mesmo se tipo detectado errado)
+      if(lethalitySheet && (!dataCiclo.f0 || dataCiclo.f0 === 'N/A' || dataCiclo.f0 === '')){
+        var f0final = _vF0MinFromLethality(lethalitySheet);
+        if(f0final.value !== null && f0final.value !== undefined){
+          dataCiclo.f0 = _vFmtNum(f0final.value, 2);
+          dataCiclo.f0_sensor = f0final.sensor || '';
+        } else {
+          dataCiclo.f0 = 'N/A';
+          dataCiclo.f0_sensor = 'N/A';
+        }
+      } else if(!lethalitySheet){
+        dataCiclo.f0 = 'N/A';
+        dataCiclo.f0_sensor = 'N/A';
+      }
+
+      adicionarCiclo();
+      var id = ciclo;
+      function put(field, val){
+        if(val === 'N/A'){
+          var el = document.getElementById('ciclo_'+id+'_'+field) || document.querySelector('[name="ciclo_'+id+'_'+field+'"]');
+          if(el){ el.value = 'N/A'; return; }
+        }
+        _vSet('ciclo_'+id+'_'+field, val);
+      }
+      put('estudo', dataCiclo.estudo);
+      put('setpoint_temp', dataCiclo.setpoint_temp);
+      put('setpoint_umidade', dataCiclo.setpoint_umidade);
+      _vSet('ciclo_'+id+'_data', dataCiclo.data);
+      _vSet('ciclo_'+id+'_inicio', dataCiclo.inicio);
+      _vSet('ciclo_'+id+'_final', dataCiclo.final);
+      put('inicio_exp', dataCiclo.inicio_exp);
+      put('final_exp', dataCiclo.final_exp);
+      put('Ciclo_normal', dataCiclo.ciclo_normal);
+      put('min_c', dataCiclo.min_c);
+      put('max_c', dataCiclo.max_c);
+      put('min_c_sensor', dataCiclo.min_c_sensor);
+      put('max_c_sensor', dataCiclo.max_c_sensor);
+      put('min_ur', dataCiclo.min_ur);
+      put('max_ur', dataCiclo.max_ur);
+      put('min_ur_sensor', dataCiclo.min_ur_sensor);
+      put('max_ur_sensor', dataCiclo.max_ur_sensor);
+      put('f0', dataCiclo.f0 || 'N/A');
+      put('f0_sensor', dataCiclo.f0_sensor || 'N/A');
+
+      if(meta.vessel){
+        var cliente = document.getElementById('cliente');
+        if(cliente && !cliente.value) cliente.value = meta.vessel;
+      }
+      if(meta.protocol){
+        var prot = document.getElementById('protocolo');
+        if(prot && !prot.value) prot.value = meta.protocol;
+      }
+      if(typeof agendarRascunho === 'function') agendarRascunho();
+
+      alert('Ciclo importado ('+tipo+'): '+dataCiclo.estudo+'\nRevise os campos e complete o que faltar.');
+    }catch(err){
+      console.error(err);
+      alert('Erro ao ler o Excel: '+(err.message||err));
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ========== RASCUNHO AUTOMÁTICO (não perde ao atualizar) ========== */
+var formularioAlterado = false;
+var _timerRascunho = null;
+var RASCUNHO_KEY = 'formularioQualificacao_rascunho';
+
+function coletarDadosFormulario(){
+  atualizarCanvasData();
+  var formData = {};
+  var formElements = document.getElementById('formulario').elements;
+  for (var i = 0; i < formElements.length; i++) {
+    var el = formElements[i];
+    if (el.name && el.type !== 'radio' && el.type !== 'checkbox') {
+      formData[el.name] = el.value;
+    }
+  }
+  var customToggles = [];
+  document.querySelectorAll('.custom-toggle').forEach(function(t, index) {
+    customToggles.push({ index: index, state: t.dataset.state || '0' });
+  });
+  formData._customToggles = customToggles;
+  var statusChecked = document.querySelector('input[name="status"]:checked');
+  formData._status = statusChecked ? statusChecked.value : '';
+  formData._ciclosHTML = document.getElementById('ciclos').innerHTML;
+  formData._cicloContador = ciclo;
+  return formData;
+}
+
+function salvarRascunhoLocal(){
+  try {
+    var data = coletarDadosFormulario();
+    localStorage.setItem(RASCUNHO_KEY, JSON.stringify(data));
+  } catch(e) {
+    console.log('Rascunho não salvo', e);
+  }
+}
+
+function agendarRascunho(){
+  formularioAlterado = true;
+  if(_timerRascunho) clearTimeout(_timerRascunho);
+  _timerRascunho = setTimeout(salvarRascunhoLocal, 400);
+}
+
+function restaurarRascunhoLocal(){
+  try {
+    var raw = localStorage.getItem(RASCUNHO_KEY);
+    if(!raw) return;
+    window._restaurandoRascunho = true;
+    processarDadosCarregados(raw);
+    window._restaurandoRascunho = false;
+    formularioAlterado = false;
+  } catch(e) {
+    window._restaurandoRascunho = false;
+    console.log('Falha ao restaurar rascunho', e);
+  }
+}
+
+function formularioTemConteudo(){
+  try {
+    var raw = localStorage.getItem(RASCUNHO_KEY);
+    if(raw) return true;
+  } catch(e){}
+  var form = document.getElementById('formulario');
+  if(!form) return false;
+  var els = form.elements;
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.name) continue;
+    if (el.type === 'radio' || el.type === 'checkbox') {
+      if (el.checked) return true;
+    } else if ((el.value || '').trim()) {
+      return true;
+    }
+  }
+  if (document.getElementById('ciclos') && document.getElementById('ciclos').children.length) return true;
+  return false;
+}
+
+// Aviso ao fechar / sair da página
+window.addEventListener('beforeunload', function(e){
+  if(!formularioTemConteudo() && !formularioAlterado) return;
+  // Salva rascunho antes de sair
+  salvarRascunhoLocal();
+  e.preventDefault();
+  e.returnValue = ''; // navegador mostra aviso padrão
+  return '';
+});
+
+// Escuta mudanças no formulário para autosave
+function iniciarAutosave(){
+  var form = document.getElementById('formulario');
+  if(!form) return;
+  form.addEventListener('input', agendarRascunho, true);
+  form.addEventListener('change', agendarRascunho, true);
+  form.addEventListener('click', function(e){
+    if(e.target && (e.target.classList.contains('custom-toggle') || e.target.closest('.grupo-item') || e.target.closest('.check'))){
+      agendarRascunho();
+    }
+  }, true);
+  // canvas: salva ao soltar o desenho (stopDraw já atualiza canvas-data; reforça rascunho)
+  var originalStop = window.stopDraw;
+  if(typeof originalStop === 'function'){
+    window.stopDraw = function(){
+      originalStop();
+      agendarRascunho();
+    };
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  inicializarListasPadrao();
+  initCanvas();
+  atualizarCertificado();
+  const numEl = document.getElementById('cert-numero');
+  if(numEl){
+    numEl.addEventListener('input', atualizarCertificado);
+    numEl.addEventListener('change', atualizarCertificado);
+  }
+  // Restaura o que estava preenchido (ex.: após atualizar a página)
+  restaurarRascunhoLocal();
+  iniciarAutosave();
+});
+</script>
+
+<div id="install-banner" class="install-banner">
+  <p id="install-text"><strong>Instale este formulário</strong><br>Adicione na tela inicial para usar offline e abrir como um aplicativo.</p>
+  <div class="install-actions">
+    <button type="button" class="btn-install" id="btn-install-app">Como instalar</button>
+    <button type="button" class="btn-close" id="btn-close-install">Fechar</button>
+  </div>
+</div>
+<script>
+(function(){
+  var banner = document.getElementById('install-banner');
+  var btnInstall = document.getElementById('btn-install-app');
+  var btnClose = document.getElementById('btn-close-install');
+  var textEl = document.getElementById('install-text');
+  if(!banner) return;
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if(isStandalone || localStorage.getItem('installBannerDismissed') === '1') return;
+  var ua = navigator.userAgent || '';
+  var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if(isIOS){
+    textEl.innerHTML = '<strong>Instale este formulário</strong><br>No Safari: toque em <b>Compartilhar</b> (□↑) → <b>Adicionar à Tela de Início</b>.';
+    btnInstall.textContent = 'Entendi';
+  }
+  setTimeout(function(){ banner.classList.add('show'); }, 1200);
+  btnClose.onclick = function(){ banner.classList.remove('show'); localStorage.setItem('installBannerDismissed','1'); };
+  btnInstall.onclick = async function(){
+    if(isIOS){
+      banner.classList.remove('show');
+      localStorage.setItem('installBannerDismissed','1');
+      alert('No iPhone/iPad:\n\n1. Toque em Compartilhar (quadrado com seta)\n2. Adicionar à Tela de Início\n3. Confirme');
+      return;
+    }
+    if(window.deferredPrompt){
+      window.deferredPrompt.prompt();
+      await window.deferredPrompt.userChoice;
+      window.deferredPrompt = null;
+      banner.classList.remove('show');
+      localStorage.setItem('installBannerDismissed','1');
+    } else {
+      alert('No Chrome: menu (⋮) → Instalar aplicativo / Adicionar à tela inicial');
+      banner.classList.remove('show');
+      localStorage.setItem('installBannerDismissed','1');
+    }
+  };
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    window.deferredPrompt = e;
+    banner.classList.add('show');
+  });
+})();
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
+      .then(function(reg){
+        console.log('Service Worker ativo:', reg.scope);
+        // Força atualização
+        if(reg.waiting) reg.waiting.postMessage({type:'SKIP_WAITING'});
+      })
+      .catch(function(err){ console.log('SW erro:', err); });
+  });
+}
+</script>
+
+</body>
+</html>
