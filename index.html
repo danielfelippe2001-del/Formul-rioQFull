@@ -554,7 +554,7 @@ button{border:0;border-radius:8px;padding:10px 14px;font-weight:bold;cursor:poin
 <div class="header-center">
   <img class="header-logo" src="logo.png" alt="Logo" onerror="this.style.display='none'">
 </div>
-<div class="cert-box" title="Mês e ano vêm da Data de início. Só o número é editável.">
+<div class="cert-box" title="Mês e ano vêm da data do primeiro ciclo com status Aprovado. Só o número é editável.">
   <label>Certificado</label>
   <span class="cert-fixed">QD-</span>
   <span class="cert-fixed" id="cert-mes">--</span>
@@ -944,7 +944,7 @@ function adicionarCiclo(){
       </div>
     </div>
 
-    <div class="field"><label>Data</label><input type="date" name="ciclo_${ciclo}_data"></div>
+    <div class="field"><label>Data</label><input type="date" name="ciclo_${ciclo}_data" onchange="atualizarCertificado()" oninput="atualizarCertificado()"></div>
     <div class="field"><label>Início</label><input type="time" step="1" name="ciclo_${ciclo}_inicio"></div>
     
     <div class="field"><label>Início da exposição</label>
@@ -1025,7 +1025,7 @@ function adicionarCiclo(){
       </div>
     </div>
 
-    <div class="field"><label>Status</label><select name="ciclo_${ciclo}_status"><option></option><option>Aprovado</option><option>Reprovado</option></select></div>
+    <div class="field"><label>Status</label><select name="ciclo_${ciclo}_status" onchange="atualizarCertificado()"><option></option><option>Aprovado</option><option>Reprovado</option></select></div>
   </div>
 
   ${mostrarBioQuim ? `
@@ -1654,7 +1654,6 @@ function processarDadosCarregados(jsonText) {
 
 /* ========== CERTIFICADO (QD-mêsnúmero/ano) ========== */
 function atualizarCertificado(){
-  const dataEl = document.getElementById('data-inicio') || document.querySelector('input[name="inicio"]');
   const mesEl = document.getElementById('cert-mes');
   const anoEl = document.getElementById('cert-ano');
   const numEl = document.getElementById('cert-numero');
@@ -1662,16 +1661,33 @@ function atualizarCertificado(){
   const printEl = document.getElementById('cert-print-full');
   if(!mesEl || !anoEl) return;
 
+  // Mês/ano = data do PRIMEIRO ciclo com status Aprovado (mais antigo)
   let mes = '--';
   let ano = '----';
-  const val = dataEl ? dataEl.value : '';
-  if(val && val.length >= 7){
-    const parts = val.split('-');
+  let melhorData = null; // YYYY-MM-DD
+
+  const selects = document.querySelectorAll('select[name^="ciclo_"][name$="_status"]');
+  selects.forEach(function(sel){
+    if(!sel.value || sel.value !== 'Aprovado') return;
+    const m = sel.name.match(/^ciclo_(\d+)_status$/);
+    if(!m) return;
+    const id = m[1];
+    const dataInp = document.querySelector('input[name="ciclo_'+id+'_data"]') || document.getElementById('ciclo_'+id+'_data');
+    const dv = dataInp ? (dataInp.value || '').trim() : '';
+    if(!dv || dv.length < 7) return;
+    if(!melhorData || dv < melhorData){
+      melhorData = dv;
+    }
+  });
+
+  if(melhorData){
+    const parts = melhorData.split('-');
     if(parts.length >= 2){
       ano = parts[0];
       mes = parts[1];
     }
   }
+
   mesEl.textContent = mes;
   anoEl.textContent = ano;
 
