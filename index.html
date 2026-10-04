@@ -866,6 +866,41 @@ function calcularF0Ciclo(idCiclo){
   }
 }
 
+
+function copiarIndicadorAnterior(idCiclo){
+  var campos = ['marca_modelo','lote_validade','valor_z','valor_d','pop_inicial','valor_f0'];
+  var prev = null;
+  var prevComDados = null;
+  for(var i = idCiclo - 1; i >= 1; i--){
+    var temCampo = document.querySelector('[name="ciclo_'+i+'_marca_modelo"]');
+    if(!temCampo) continue;
+    if(prev === null) prev = i;
+    var temDados = false;
+    for(var c=0;c<campos.length;c++){
+      var el = document.querySelector('[name="ciclo_'+i+'_'+campos[c]+'"]') || document.getElementById('ciclo_'+i+'_'+campos[c]);
+      if(el && String(el.value||'').trim()){ temDados = true; break; }
+    }
+    if(temDados){ prevComDados = i; break; }
+  }
+  var origem = prevComDados !== null ? prevComDados : prev;
+  if(origem === null){
+    alert('Não há ciclo anterior com campos de indicador.\nPreencha o indicador no ciclo de cima primeiro.');
+    return;
+  }
+  campos.forEach(function(f){
+    var src = document.querySelector('[name="ciclo_'+origem+'_'+f+'"]') || document.getElementById('ciclo_'+origem+'_'+f);
+    var dst = document.querySelector('[name="ciclo_'+idCiclo+'_'+f+'"]') || document.getElementById('ciclo_'+idCiclo+'_'+f);
+    if(src && dst) dst.value = src.value;
+  });
+  var pfSrc = document.getElementById('ciclo_'+origem+'_pop_final');
+  var pfDst = document.getElementById('ciclo_'+idCiclo+'_pop_final');
+  if(pfSrc && pfDst) pfDst.value = pfSrc.value;
+  if(typeof calcularF0Ciclo === 'function'){
+    try { calcularF0Ciclo(idCiclo); } catch(e){}
+  }
+  if(typeof agendarRascunho === 'function') agendarRascunho();
+}
+
 function adicionarCiclo(){
   ciclo++;
   const bioState = parseInt(document.getElementById('toggle-bioindicadores')?.dataset.state || '0');
@@ -997,12 +1032,13 @@ function adicionarCiclo(){
   <div class="sub-box">
     <div class="sub-title">Controle Biológico / Químico (Indicadores)</div>
     <div class="grid">
-      <div class="field"><label>Letalidade</label>
-        <div style="display:flex; align-items:center; gap:10px; height: 43px;">
-          <div class="custom-toggle" data-state="0" onclick="cycleToggle(this)" title="Clique: OK → NA → limpar"><span class="toggle-content"></span></div>
-          <span style="font-size:13px; color:#555;">Status (OK / NA)</span>
-          <input type="hidden" name="ciclo_${ciclo}_letalidade_estado" value="0">
-        </div>
+      <div class="field"><label>Copiar indicador</label>
+        <button type="button" class="save-option" style="width:100%;height:43px;font-size:13px;"
+          onclick="copiarIndicadorAnterior(${ciclo})"
+          title="Copia marca, lote, Z, D, população e F0 do ciclo anterior que tiver indicador preenchido">
+          Copiar do ciclo anterior
+        </button>
+        <input type="hidden" name="ciclo_${ciclo}_letalidade_estado" value="0">
       </div>
 
       <div class="field"><label>Marca / Modelo</label><input type="text" name="ciclo_${ciclo}_marca_modelo"></div>
@@ -2145,21 +2181,21 @@ function importarValidadorExcel(e){
         var expIni = _vFindEvent(cycles, ['Porta Aberta','Queda de Energia','Desligado']);
         /* Fim exposição: porta fechada / religado / ligado */
         var expFim = _vFindEvent(cycles, ['Porta Fechada','Religado','Ligado/Estabilizado','Ligado/Estabili','Ligado']);
-        /* Ciclo normal: volta ao critério (2ª monitoração / estável após evento) */
-        var cicloNorm = null;
-        if(tipo === 'porta'){
-          cicloNorm = _vFindEvent(cycles, ['Monitoração','Monitoracao'], 2);
-        } else {
-          // após religado: Monitoração ou Estável
-          cicloNorm = _vFindEventAfter(cycles,
-            ['Religado','Ligado/Estabilizado','Ligado/Estabili','Ligado','Desligado','Queda de Energia'],
-            ['Monitoração','Monitoracao','Estável','Estavel']);
-          // se não achar, tenta 2ª Monitoração/Estável no estudo
-          if(!cicloNorm){
-            var m2 = _vFindEvent(cycles, ['Monitoração','Monitoracao'], 2);
-            var e2 = _vFindEvent(cycles, ['Estável','Estavel'], 2);
-            cicloNorm = m2 || e2;
-          }
+        /* Ciclo normal: volta ao critério após o evento */
+        var cicloNorm = _vFindEventAfter(cycles,
+          ['Porta Fechada','Religado','Ligado/Estabilizado','Ligado/Estabili','Ligado','Porta Aberta','Queda de Energia','Desligado'],
+          ['Monitoração','Monitoracao','Estável','Estavel']);
+        if(!cicloNorm){
+          var m2 = _vFindEvent(cycles, ['Monitoração','Monitoracao'], 2);
+          var e2 = _vFindEvent(cycles, ['Estável','Estavel'], 2);
+          cicloNorm = m2 || e2;
+        }
+        /* Se não há Religado/Porta Fechada, o fim da exposição é a volta à monitoração */
+        if(!expFim && cicloNorm) expFim = cicloNorm;
+        if(!expFim && expIni){
+          expFim = _vFindEventAfter(cycles,
+            ['Porta Aberta','Queda de Energia','Desligado'],
+            ['Monitoração','Monitoracao','Estável','Estavel','Porta Fechada','Religado','Ligado']);
         }
         if(expIni) dataCiclo.inicio_exp = _vFmtTime(expIni.time);
         else dataCiclo.inicio_exp = 'N/A';
