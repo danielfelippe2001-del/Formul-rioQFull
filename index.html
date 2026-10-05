@@ -543,9 +543,12 @@ button{border:0;border-radius:8px;padding:10px 14px;font-weight:bold;cursor:poin
 @media print{.install-banner{display:none!important}}
 
 
+.justificativa-print{display:none}
+.justificativa-print.show-justificativa{display:block}
 .justificativa-print textarea{width:100%;min-height:60px;border:1px solid #ccc;padding:8px;font-size:13px}
 @media print{
-  .justificativa-print{display:block !important;break-inside:avoid}
+  .justificativa-print{display:none !important}
+  .justificativa-print.show-justificativa{display:block !important;break-inside:avoid}
   .justificativa-print h2{font-size:14px}
 }
 
@@ -1116,7 +1119,7 @@ function limparFormularioCompleto(){
   var justForm = document.getElementById('justificativa-campos');
   if(justForm) justForm.value = '';
   var justBox = document.getElementById('justificativa-box');
-  if(justBox) justBox.style.display = 'none';
+  if(justBox){ justBox.style.display = 'none'; justBox.classList.remove('show-justificativa'); }
 
   try { localStorage.removeItem(typeof RASCUNHO_KEY !== 'undefined' ? RASCUNHO_KEY : 'formularioQualificacao_rascunho'); } catch(e){}
   formularioAlterado = false;
@@ -1208,7 +1211,10 @@ function verificarCamposEVazar(){
     const justForm = document.getElementById('justificativa-campos');
     const justBox = document.getElementById('justificativa-box');
     if (justForm) justForm.value = '';
-    if (justBox) justBox.style.display = 'none';
+    if (justBox) {
+      justBox.style.display = 'none';
+      justBox.classList.remove('show-justificativa');
+    }
     prepararImpressao();
   }
 }
@@ -1292,7 +1298,10 @@ function prosseguirImpressao() {
   const justForm = document.getElementById('justificativa-campos');
   const justBox = document.getElementById('justificativa-box');
   if (justForm) justForm.value = texto;
-  if (justBox) justBox.style.display = 'block';
+  if (justBox) {
+    justBox.style.display = 'block';
+    justBox.classList.add('show-justificativa');
+  }
 
   if (typeof agendarRascunho === 'function') agendarRascunho();
   fecharModalAlerta();
@@ -2002,7 +2011,7 @@ function _vSimplifyEstudo(userLine, tipo){
 }
 function _vParseCycles(sheet){
   var rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:null, raw:true});
-  var meta = {study_name:'', company:'', vessel:'', protocol:'', validator_sn:'', user_line:'', comments_line:'', queda_hint:false, porta_hint:false, setpoint_temp:'', setpoint_ur:''};
+  var meta = {study_name:'', company:'', vessel:'', protocol:'', validator_sn:'', user_line:'', comments_line:'', queda_hint:false, porta_hint:false, setpoint_temp:'', setpoint_ur:'', _setpoint_raw:''};
   var cycles = [];
   var currentDate = null;
   var eventNames = ['Study Start','Study End','Monitoração','Monitoracao','Porta Aberta','Porta Fechada','Queda de Energia','Aquecimento','Esterilização','Esterilizacao','Resfriamento','Despirogenização','Despirogenizacao','Secagem','Cooling','Heating','Exposure','Sterilization','Exhaust','Purge','Equalização','Equalizacao','Vácuo','Vacuo','Drying'];
@@ -2016,10 +2025,22 @@ function _vParseCycles(sheet){
       if(v === 'Vessel ID:' && row[c+1]) meta.vessel = String(row[c+1]);
       if(v === 'SOP/Protocol #:' && row[c+1]) meta.protocol = String(row[c+1]);
       if(v === 'Validator SN:' && row[c+1]) meta.validator_sn = String(row[c+1]);
-      if(v === 'Comments:' && row[c+1] && String(row[c+1]).trim()) {
-        meta.comments_line = String(row[c+1]).trim();
-        if(/queda/i.test(meta.comments_line)) meta.queda_hint = true;
-        if(/abertura/i.test(meta.comments_line)) meta.porta_hint = true;
+      if(v === 'Comments:' || v === 'Comments') {
+        // valor pode não estar na célula seguinte (layout do Validador)
+        for(var cj = c+1; cj < row.length; cj++){
+          if(row[cj] != null && String(row[cj]).trim()){
+            meta.comments_line = String(row[cj]).trim();
+            break;
+          }
+        }
+        if(meta.comments_line){
+          if(/queda/i.test(meta.comments_line)) meta.queda_hint = true;
+          if(/abertura/i.test(meta.comments_line)) meta.porta_hint = true;
+        }
+      }
+      // Qualquer célula com "Setpoint" guarda para extração
+      if(typeof v === 'string' && /setpoint/i.test(v)){
+        meta._setpoint_raw = (meta._setpoint_raw ? meta._setpoint_raw + ' ' : '') + v;
       }
       if(typeof v === 'string' && v.indexOf('User') === 0) meta.user_line = v.trim();
       if(typeof v === 'string' && /queda\s+de\s+energia/i.test(v)) meta.queda_hint = true;
@@ -2058,8 +2079,8 @@ function _vParseCycles(sheet){
       cycles.push({date: currentDate, time: tval, label: label});
     }
   }
-  var textoSP = ((meta.user_line||'') + ' ' + (meta.comments_line||'')).trim();
-  // Setpoint temperatura (aceita negativo: Setpoint -80,0°C)
+  var textoSP = ((meta.user_line||'') + ' ' + (meta.comments_line||'') + ' ' + (meta._setpoint_raw||'')).trim();
+  // Setpoint temperatura (aceita negativo e "Setpoint 121°C")
   var um = textoSP.match(/Setpoint[^0-9\-]*(-?\d+[.,]?\d*)\s*°?\s*C/i);
   if(!um) um = textoSP.match(/Setpoint[^0-9\-]*(-?\d+[.,]?\d*)/i);
   if(um){
