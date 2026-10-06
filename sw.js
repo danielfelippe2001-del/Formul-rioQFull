@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qualificacao-v38';
+const CACHE_NAME = 'qualificacao-v39';
 const ASSETS = [
   './',
   './index.html',
@@ -76,4 +76,3 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
-
