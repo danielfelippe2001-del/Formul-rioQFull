@@ -553,11 +553,10 @@ button{border:0;border-radius:8px;padding:10px 14px;font-weight:bold;cursor:poin
 }
 
 @media print {
-  .no-print, .copiar-indicador-field { display: none !important; }
-  /* botões N/A, Salvar, Remover, importar etc. */
+  .no-print, .copiar-indicador-field, .btn-import-validador { display: none !important; }
   .save-option, .btn-na-quick, button.remove, .actions button,
-  #btn-importar-validador, button[onclick*="Importar"], button[onclick*="adicionarCiclo"],
-  button[onclick*="copiarIndicador"] { display: none !important; }
+  button.add, button[onclick*="import-validador"], button[onclick*="adicionarCiclo"],
+  button[onclick*="copiarIndicador"], button[onclick*="importarValidador"] { display: none !important; }
   .sub-box .grid {
     grid-template-columns: repeat(3, 1fr) !important;
   }
@@ -715,11 +714,11 @@ button{border:0;border-radius:8px;padding:10px 14px;font-weight:bold;cursor:poin
 <h2>5. Ciclos realizados</h2>
 <div id="ciclos"></div>
 <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:8px">
-  <button type="button" class="add" onclick="adicionarCiclo()">+ Adicionar ciclo</button>
-  <button type="button" class="secondary" onclick="document.getElementById('import-validador').click()">Importar do Validador (Excel)</button>
+  <button type="button" class="add no-print" onclick="adicionarCiclo()">+ Adicionar ciclo</button>
+  <button type="button" class="secondary no-print btn-import-validador" onclick="document.getElementById('import-validador').click()">Importar do Validador (Excel)</button>
   <input type="file" id="import-validador" accept=".xlsx,.xls" style="display:none" onchange="importarValidadorExcel(event)">
 </div>
-<p class="draw-help" style="margin-top:0">Importa horários e mín/máx do relatório Excel do Validador 2000 (3.62B). Funciona para 24h, abertura de porta, queda de energia, esterilização e túnel.</p>
+<p class="draw-help no-print" style="margin-top:0">Importa horários e mín/máx do relatório Excel do Validador 2000 (3.62B). Funciona para 24h, abertura de porta, queda de energia, esterilização e túnel.</p>
 </section>
 
 <section>
@@ -1245,6 +1244,21 @@ function limparEspelhosImpressao(){
 
 function prepararImpressao(){
   limparEspelhosImpressao();
+
+  // Esconde botões de ação (importar, adicionar ciclo, etc.)
+  document.querySelectorAll('button').forEach(function(b){
+    var t = (b.textContent || '') + ' ' + (b.getAttribute('onclick') || '');
+    if(/importar do validador|adicionar ciclo|import-validador/i.test(t)){
+      b.classList.add('no-print');
+      b.style.setProperty('display', 'none', 'important');
+    }
+  });
+  document.querySelectorAll('p.draw-help').forEach(function(p){
+    if(/Importa horários|Validador 2000/i.test(p.textContent || '')){
+      p.classList.add('no-print');
+      p.style.setProperty('display', 'none', 'important');
+    }
+  });
 
   // Esconde "Copiar indicador" mesmo em ciclos criados antes da atualização
   document.querySelectorAll('.field, .sub-box .grid > div').forEach(function(el){
@@ -2705,4 +2719,3 @@ if('serviceWorker' in navigator){
 
 </body>
 </html>
-
