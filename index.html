@@ -2105,6 +2105,17 @@ function _vParseCycles(sheet){
   var uh = textoSP.match(/(-?\d+[.,]?\d*)\s*%\s*U?R/i);
   if(uh) meta.setpoint_ur = uh[1].replace('.', ',') + '%';
 
+  // Equipamento e TAG a partir de Study Name (ex: "Câmara Climática - TAG: 5021217")
+  meta.equipamento = '';
+  meta.tag = '';
+  if(meta.study_name){
+    var sn = String(meta.study_name).trim();
+    var tagM = sn.match(/TAG\s*[:#]?\s*([A-Za-z0-9._\-\/]+)/i);
+    if(tagM) meta.tag = tagM[1].trim();
+    var eq = sn.replace(/\s*[-–]\s*TAG\s*[:#]?\s*.*/i, '').trim();
+    if(eq) meta.equipamento = eq;
+  }
+
   return {meta: meta, cycles: cycles};
 }
 function _vFindSheet(wb, pred){
@@ -2238,6 +2249,36 @@ function _vCombineDateTime(dateVal, timeVal){
   }
   return d;
 }
+
+function _vDetectIntervalo(sheet){
+  if(!sheet) return '';
+  try{
+    var rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:null, raw:true});
+    var times = [];
+    for(var i=0;i<rows.length && times.length<12;i++){
+      var cell = rows[i] && rows[i][0];
+      if(cell instanceof Date && !isNaN(cell.getTime()) && cell.getFullYear() > 1990){
+        times.push(cell.getTime());
+      }
+    }
+    if(times.length < 2) return '';
+    var diffs = [];
+    for(var j=1;j<times.length;j++){
+      var d = Math.round((times[j] - times[j-1]) / 1000);
+      if(d > 0 && d < 3600) diffs.push(d);
+    }
+    if(!diffs.length) return '';
+    var freq = {};
+    diffs.forEach(function(d){ freq[d] = (freq[d]||0)+1; });
+    var best = diffs[0], bestc = 0;
+    Object.keys(freq).forEach(function(k){
+      if(freq[k] > bestc){ bestc = freq[k]; best = parseInt(k,10); }
+    });
+    if(best >= 60 && best % 60 === 0) return (best/60) + ' min.';
+    return best + ' seg.';
+  }catch(e){ return ''; }
+}
+
 function importarValidadorExcel(e){
   var file = e.target.files && e.target.files[0];
   e.target.value = '';
@@ -2508,17 +2549,30 @@ function importarValidadorExcel(e){
       put('f0', dataCiclo.f0 || 'N/A');
       put('f0_sensor', dataCiclo.f0_sensor || 'N/A');
 
-      if(meta.vessel){
-        var cliente = document.getElementById('cliente');
-        if(cliente && !cliente.value) cliente.value = meta.vessel;
+      // Campos do cabeçalho do formulário (Identificação)
+      function _vFillTop(id, val){
+        if(!val) return;
+        var el = document.getElementById(id);
+        if(el){ el.value = val; }
       }
-      if(meta.protocol){
-        var prot = document.getElementById('protocolo');
-        if(prot && !prot.value) prot.value = meta.protocol;
+      _vFillTop('cliente', meta.vessel);
+      _vFillTop('protocolo', meta.protocol);
+      _vFillTop('equipamento', meta.equipamento);
+      _vFillTop('tag', meta.tag);
+      // Intervalo de registro: diferença entre timestamps do Group1 Calcs / dados
+      var interv = '';
+      if(typeof g1calcs !== 'undefined' && g1calcs) interv = _vDetectIntervalo(g1calcs);
+      if(!interv && typeof tempSheet !== 'undefined' && tempSheet) interv = _vDetectIntervalo(tempSheet);
+      if(!interv){
+        var g1data = _vFindSheet(wb, function(n){ return /^group\s*1$/i.test(n) || /group\s*1(?!.*calc)/i.test(n); });
+        if(g1data) interv = _vDetectIntervalo(g1data);
       }
-      if(typeof agendarRascunho === 'function') agendarRascunho();
+      _vFillTop('intervalo', interv);
 
-      alert('Ciclo importado ('+tipo+'): '+dataCiclo.estudo+'\nRevise os campos e complete o que faltar.');
+      if(typeof agendarRascunho === 'function') agendarRascunho();
+      if(typeof atualizarCertificado === 'function') atualizarCertificado();
+
+      alert('Ciclo importado ('+tipo+'): '+dataCiclo.estudo+'\nCampos do topo preenchidos quando encontrados no Excel.\nRevise e complete o que faltar.');
     }catch(err){
       console.error(err);
       alert('Erro ao ler o Excel: '+(err.message||err));
