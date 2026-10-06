@@ -2023,6 +2023,13 @@ function _vSimplifyEstudo(userLine, tipo){
   }
   return u.split(/-\s*Setpoint/i)[0].replace(/\s+/g,' ').trim().substring(0,50);
 }
+function _vNextCell(row, c){
+  // Validador deixa células mescladas vazias entre rótulo e valor
+  for(var i = c+1; i < row.length; i++){
+    if(row[i] != null && String(row[i]).trim() !== '') return row[i];
+  }
+  return null;
+}
 function _vParseCycles(sheet){
   var rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:null, raw:true});
   var meta = {study_name:'', company:'', vessel:'', protocol:'', validator_sn:'', user_line:'', comments_line:'', queda_hint:false, porta_hint:false, setpoint_temp:'', setpoint_ur:'', _setpoint_raw:''};
@@ -2034,11 +2041,11 @@ function _vParseCycles(sheet){
     var row = rows[r] || [];
     for(var c=0;c<row.length;c++){
       var v = row[c];
-      if(v === 'Study Name:' && row[c+1]) meta.study_name = String(row[c+1]);
-      if(v === 'Company:' && row[c+1]) meta.company = String(row[c+1]);
-      if(v === 'Vessel ID:' && row[c+1]) meta.vessel = String(row[c+1]);
-      if(v === 'SOP/Protocol #:' && row[c+1]) meta.protocol = String(row[c+1]);
-      if(v === 'Validator SN:' && row[c+1]) meta.validator_sn = String(row[c+1]);
+      if(v === 'Study Name:'){ var nv=_vNextCell(row,c); if(nv!=null) meta.study_name = String(nv); }
+      if(v === 'Company:'){ var nv=_vNextCell(row,c); if(nv!=null) meta.company = String(nv); }
+      if(v === 'Vessel ID:'){ var nv=_vNextCell(row,c); if(nv!=null) meta.vessel = String(nv); }
+      if(v === 'SOP/Protocol #:'){ var nv=_vNextCell(row,c); if(nv!=null) meta.protocol = String(nv); }
+      if(v === 'Validator SN:'){ var nv=_vNextCell(row,c); if(nv!=null) meta.validator_sn = String(nv); }
       if(v === 'Comments:' || v === 'Comments') {
         // valor pode não estar na célula seguinte (layout do Validador)
         for(var cj = c+1; cj < row.length; cj++){
