@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qualificacao-v40';
+const CACHE_NAME = 'qualificacao-v41';
 const ASSETS = [
   './',
   './index.html',
